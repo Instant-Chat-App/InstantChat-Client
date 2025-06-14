@@ -3,7 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import './assets/index.css'
-import routes from './routes/router.ts'
+import { routes } from './routes/router.tsx'
 
 const queryClient = new QueryClient()
 
