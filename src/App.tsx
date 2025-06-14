@@ -1,5 +1,7 @@
-const App = () => {
-   return <div className='text-xs underline'>App</div>
+import { Outlet } from 'react-router-dom'
+
+function App() {
+   return <Outlet />
 }
 
 export default App

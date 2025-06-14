@@ -1,4 +1,4 @@
+import ChatPage from '@/pages/ChatPage'
 import { createBrowserRouter } from 'react-router-dom'
-import App from '~/App'
 
-export const routes = createBrowserRouter([{ path: '/', element: <App /> }])
+export const routes = createBrowserRouter([{ path: '/', element: <ChatPage /> }])
