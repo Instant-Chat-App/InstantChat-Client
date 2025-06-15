@@ -1,16 +1,26 @@
 export interface Chat {
-   id: number
+   chatId: number
    name: string
+   avatar?: string
+   type: 'group' | 'private' | 'channel'
 }
 
 export interface ChatMessage {
-   message_id: number
-   sender_info: {
-      sender_id: number
-      sender_name: string
-      sender_avatar?: string
-   }
-   is_owner: boolean
+   messageId: number
+   timestamp: Date
+   isOwner: boolean // true if the message is sent by the current user
    content: string
-   timestamp: string
+   senderInfo: {
+      senderId: number
+      senderName: string
+      senderAvatar?: string
+   }
+   attachments?: {
+      url: string
+      type: 'image' | 'video' | 'file'
+   }[]
+   reaction: {
+      emoji: 'LOVE' | 'LIKE' | 'LAUGH' | 'SAD' | 'ANGRY'
+      reactor: string // name of the user who reacted
+   }[]
 }

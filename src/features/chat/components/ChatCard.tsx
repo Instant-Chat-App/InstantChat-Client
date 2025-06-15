@@ -18,10 +18,10 @@ function ChatCard({ chat_id, name, avatar }: Props) {
          <div className='relative'>
             <Avatar className='h-12 w-12'>
                <AvatarImage src={avatar || '/placeholder.svg'} alt={name} />
-               <AvatarFallback>{name}</AvatarFallback>
+               <AvatarFallback>{name.charAt(0)}</AvatarFallback>
             </Avatar>
          </div>
-         <div className='min-w-0 flex-1'>
+         <div className='min-w-0 flex-1'> 
             <div className='flex items-center justify-between'>
                <h3 className='truncate font-medium'>{name}</h3>
                {/* <span className='text-muted-foreground text-xs'>{chat.timestamp}</span> */}
