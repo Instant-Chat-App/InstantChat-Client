@@ -1,5 +1,9 @@
+import { HttpStatusCode } from "axios"
+
 export interface DataResponse<T> {
-   code: number
+   success: boolean
+   code: HttpStatusCode
    message: string
    data: T
+   errors: string
 }

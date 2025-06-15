@@ -6,10 +6,11 @@ export interface Chat {
 }
 
 export interface MessageReaction {
-   emoji: 'LOVE' | 'LIKE' | 'LAUGH' | 'SAD' | 'ANGRY'
+   emoji: 'LOVE' | 'LIKE' | 'LAUGH' | 'SAD' | 'ANGRY' | 'WOW'
    reactorName: string 
    reactorId: number
    reactorAvatar?: string
+   timestamp: Date 
 }
 
 export interface ChatMessage {
@@ -26,5 +27,5 @@ export interface ChatMessage {
       url: string
       type: 'image' | 'video' | 'file'
    }[]
-   reaction: MessageReaction[]
+   reactions: MessageReaction[]
 }

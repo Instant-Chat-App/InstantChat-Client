@@ -1,18 +1,16 @@
-import { AvatarFallback } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@/lib/utils'
-import { Avatar, AvatarImage } from '@radix-ui/react-avatar'
 import { useEffect } from 'react'
+import ChatCard from './ChatCard'
 
 function ChatList() {
-
    useEffect(() => {
       // handle fetch chats here
    })
-  
+
    return (
       <ScrollArea className='flex-1'>
-         <div className='p-2'>
+         <ChatCard chat={{ chatId: 1, name: 'Hello', type: 'private' }} />
+         {/* <div className='p-2'>
             <div
                // onClick={() => onChatSelect(chat)}
                className={cn(
@@ -43,9 +41,6 @@ function ChatList() {
                         5
                      </Badge>
                   </div> */}
-               </div>
-            </div>
-         </div>
       </ScrollArea>
    )
 }

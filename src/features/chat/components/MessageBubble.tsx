@@ -1,21 +1,22 @@
 import { cn } from '@/lib/utils'
 import { caculateReaction } from '@/utils/CalculateReaction'
+import { REVERSE_REACTIONS_MAP } from '@/utils/Constant'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { useEffect } from 'react'
 import { ChatMessage } from '../types/Chat'
 import MessageActionPopover from './MessageActionPopover'
-import { REVERSE_REACTIONS_MAP } from '@/utils/Constant'
+import MessageListReaction from './MessageListReaction'
 
 interface Props {
    message: ChatMessage
 }
 
 function MessageBubble({ message }: Props) {
-   const { messageId, timestamp, isOwner, content, senderInfo, attachments, reaction } =
+   const { messageId, timestamp, isOwner, content, senderInfo, attachments, reactions } =
       message
 
    useEffect(() => {
-      Object.entries(caculateReaction(reaction)).map(([emoji, count]) => {
+      Object.entries(caculateReaction(reactions)).map(([emoji, count]) => {
          console.log(emoji, count)
       })
    })
@@ -55,16 +56,22 @@ function MessageBubble({ message }: Props) {
                )}
 
                {/*  Show reaction  */}
-               <button className='mt-2 hover:cursor-pointer w-fit'>
-                  {Array.from(caculateReaction(reaction).entries()).map(([emoji, count]) => (
-                     <div
-                        key={emoji}
-                        className='text-muted-foreground bg-gray-200 rounded-lg ml-1 px-2 py-[0.5px] inline-flex items-center gap-1 text-sm'
-                     >
-                        {REVERSE_REACTIONS_MAP.get(emoji)} {count}
-                     </div>
-                  ))}
-               </button>
+               {reactions && (
+                  <MessageListReaction reactions={reactions}>
+                     <button className='mt-2 w-fit hover:cursor-pointer'>
+                        {Array.from(caculateReaction(reactions).entries()).map(
+                           ([emoji, count]) => (
+                              <div
+                                 key={emoji}
+                                 className='text-muted-foreground ml-1 inline-flex items-center gap-1 rounded-lg bg-gray-200 px-2 py-[0.5px] text-sm'
+                              >
+                                 {REVERSE_REACTIONS_MAP.get(emoji)} {count}
+                              </div>
+                           )
+                        )}
+                     </button>
+                  </MessageListReaction>
+               )}
 
                <p
                   className={cn(

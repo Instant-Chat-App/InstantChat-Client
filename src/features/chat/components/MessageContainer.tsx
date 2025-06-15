@@ -27,31 +27,36 @@ const message: ChatMessage = {
          type: 'file'
       }
    ],
-   reaction: [
+   reactions: [
       {
          emoji: 'LIKE',
          reactorName: 'Khoa',
-         reactorId: 1
+         reactorId: 1,
+         timestamp: new Date('2025-06-15T09:31:00')
       },
       {
          emoji: 'LOVE',
          reactorName: 'Huyền',
-         reactorId: 3
+         reactorId: 3,
+         timestamp: new Date('2025-06-15T09:31:00')
       },
       {
          emoji: 'LAUGH',
          reactorName: 'Minh',
-         reactorId: 4
+         reactorId: 4,
+         timestamp: new Date('2025-06-15T09:31:00')
       },
       {
          emoji: 'LIKE',
          reactorName: 'Kha',
-         reactorId: 2
+         reactorId: 2,
+         timestamp: new Date('2025-06-15T09:31:00')
       },
       {
          emoji: 'SAD',
          reactorName: 'Vân',
-         reactorId: 5
+         reactorId: 5,
+         timestamp: new Date('2025-06-15T09:31:00')
       }
    ]
 }
