@@ -30,23 +30,28 @@ const message: ChatMessage = {
    reaction: [
       {
          emoji: 'LIKE',
-         reactor: 'Khoa'
+         reactorName: 'Khoa',
+         reactorId: 1
       },
       {
          emoji: 'LOVE',
-         reactor: 'Huyền'
+         reactorName: 'Huyền',
+         reactorId: 3
       },
       {
          emoji: 'LAUGH',
-         reactor: 'Minh'
+         reactorName: 'Minh',
+         reactorId: 4
       },
       {
          emoji: 'LIKE',
-         reactor: 'Kha'
+         reactorName: 'Kha',
+         reactorId: 2
       },
       {
          emoji: 'SAD',
-         reactor: 'Vân'
+         reactorName: 'Vân',
+         reactorId: 5
       }
    ]
 }

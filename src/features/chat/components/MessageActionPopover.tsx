@@ -28,6 +28,7 @@ function MessageActionPopover({ children, message }: Props) {
             align='end'
             className='flex w-fit items-center border-0 bg-none p-0 shadow-none outline-none'
          >
+            {/*  React icon and Trash icon  */}
             <div className='flex items-center gap-1'>
                {message.isOwner && (
                   <button>

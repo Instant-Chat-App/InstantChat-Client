@@ -1,7 +1,10 @@
 import { cn } from '@/lib/utils'
+import { caculateReaction } from '@/utils/CalculateReaction'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
+import { useEffect } from 'react'
 import { ChatMessage } from '../types/Chat'
 import MessageActionPopover from './MessageActionPopover'
+import { REVERSE_REACTIONS_MAP } from '@/utils/Constant'
 
 interface Props {
    message: ChatMessage
@@ -10,6 +13,12 @@ interface Props {
 function MessageBubble({ message }: Props) {
    const { messageId, timestamp, isOwner, content, senderInfo, attachments, reaction } =
       message
+
+   useEffect(() => {
+      Object.entries(caculateReaction(reaction)).map(([emoji, count]) => {
+         console.log(emoji, count)
+      })
+   })
 
    return (
       <div className={cn('flex w-full gap-1', isOwner ? 'justify-end' : 'justify-start')}>
@@ -30,7 +39,7 @@ function MessageBubble({ message }: Props) {
          <MessageActionPopover message={message}>
             <div
                className={cn(
-                  'flex-1 rounded-2xl px-4 py-2 break-words max-w-[45%]',
+                  'max-w-[45%] flex-1 rounded-2xl px-4 py-2 break-words',
                   isOwner ? 'rounded-br-md bg-[#766ac8] text-white' : 'bg-muted rounded-bl-md'
                )}
             >
@@ -44,6 +53,19 @@ function MessageBubble({ message }: Props) {
                      <p className='text-sm'>{content}</p>
                   </div>
                )}
+
+               {/*  Show reaction  */}
+               <button className='mt-2 hover:cursor-pointer w-fit'>
+                  {Array.from(caculateReaction(reaction).entries()).map(([emoji, count]) => (
+                     <div
+                        key={emoji}
+                        className='text-muted-foreground bg-gray-200 rounded-lg ml-1 px-2 py-[0.5px] inline-flex items-center gap-1 text-sm'
+                     >
+                        {REVERSE_REACTIONS_MAP.get(emoji)} {count}
+                     </div>
+                  ))}
+               </button>
+
                <p
                   className={cn(
                      'mt-1 flex justify-end text-xs',

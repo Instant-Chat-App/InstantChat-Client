@@ -1,12 +1,5 @@
+import { REACTIONS } from '@/utils/Constant'
 import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover'
-
-const REACTIONS = [
-   { emoji: '👍', value: 'LIKE' },
-   { emoji: '❤️', value: 'LOVE' },
-   { emoji: '😂', value: 'LAUGH' },
-   { emoji: '😢', value: 'SAD' },
-   { emoji: '😡', value: 'ANGRY' }
-]
 
 interface Props {
    children: React.ReactNode
@@ -23,7 +16,10 @@ function MessageReactionBar({ children }: Props) {
          >
             <div className='flex items-center'>
                {REACTIONS.map((reaction) => (
-                  <button className='rounded-md p-1 hover:cursor-pointer hover:bg-gray-200 text-[20px]'>
+                  <button
+                     key={reaction.emoji}
+                     className='rounded-md p-1 text-[20px] hover:cursor-pointer hover:bg-gray-200'
+                  >
                      {reaction.emoji}
                   </button>
                ))}

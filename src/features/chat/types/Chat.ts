@@ -5,6 +5,13 @@ export interface Chat {
    type: 'group' | 'private' | 'channel'
 }
 
+export interface MessageReaction {
+   emoji: 'LOVE' | 'LIKE' | 'LAUGH' | 'SAD' | 'ANGRY'
+   reactorName: string 
+   reactorId: number
+   reactorAvatar?: string
+}
+
 export interface ChatMessage {
    messageId: number
    timestamp: Date
@@ -19,8 +26,5 @@ export interface ChatMessage {
       url: string
       type: 'image' | 'video' | 'file'
    }[]
-   reaction: {
-      emoji: 'LOVE' | 'LIKE' | 'LAUGH' | 'SAD' | 'ANGRY'
-      reactor: string // name of the user who reacted
-   }[]
+   reaction: MessageReaction[]
 }
