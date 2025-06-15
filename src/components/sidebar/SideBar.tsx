@@ -5,7 +5,7 @@ import { Input } from '../ui/input'
 
 function SideBar() {
    return (
-      <div className='bg-background fixed top-0 left-0 h-full w-[25%] border border-l'>
+      <div className='min-h-screen w-1/4 border'>
          <div className='border-border border-b p-4'>
             {/* Header Section */}
             <div className='mb-4 flex items-center justify-between'>
@@ -18,7 +18,12 @@ function SideBar() {
             {/* Search Section */}
             <div className='relative'>
                <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-               <Input placeholder='Search chats...' className='pl-10' />
+               <Input
+                  placeholder='Search chats...'
+                  // value={searchQuery}
+                  // onChange={(e) => setSearchQuery(e.target.value)}
+                  className='pl-10'
+               />
             </div>
          </div>
 
