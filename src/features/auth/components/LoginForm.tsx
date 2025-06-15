@@ -15,25 +15,30 @@ import {
    FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { PATH_URL } from '@/utils/Constant'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Lock, Phone } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
-import { LoginFormData, loginSchema } from '../types/Auth'
+import { LoginFormData, loginSchema } from '../types/AuthType'
 
 function LoginForm() {
    const [showPassword, setShowPassword] = useState(false)
    const { loginMutation } = useAuth()
+   const navigate = useNavigate()
 
    const form = useForm<LoginFormData>({
       resolver: zodResolver(loginSchema),
       defaultValues: { phone: '', password: '' }
    })
 
-   const onSubmit = (data: LoginFormData) => {
+   const onSubmit = (data: LoginFormData): void => {
+      console.log(data)
       loginMutation.mutate(data)
    }
+   const handleSwitchToRegister = (): void => navigate(PATH_URL.REGISTER)
 
    return (
       <Card className='w-full max-w-md'>
@@ -110,7 +115,7 @@ function LoginForm() {
                         </FormItem>
                      )}
                   />
-                  
+
                   {/* SUBMIT */}
                   <Button
                      variant='primary'
@@ -125,7 +130,7 @@ function LoginForm() {
                   <div className='text-center'>
                      <Button
                         variant='link'
-                        onClick={() => {}}
+                        onClick={handleSwitchToRegister}
                         disabled={loginMutation.isPending}
                         className='text-sm'
                         type='button'

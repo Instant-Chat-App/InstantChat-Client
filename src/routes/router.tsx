@@ -1,5 +1,5 @@
-
 import LoginForm from '@/features/auth/components/LoginForm'
+import RegisterForm from '@/features/auth/components/RegisterForm'
 import AuthPage from '@/layouts/AuthLayout'
 import ChatPage from '@/pages/ChatPage'
 import { PATH_URL } from '@/utils/Constant'
@@ -14,6 +14,10 @@ export const routes = createBrowserRouter([
          {
             path: PATH_URL.LOGIN,
             element: <LoginForm />
+         },
+         {
+            path: PATH_URL.REGISTER,
+            element: <RegisterForm />
          }
       ]
    }

@@ -22,7 +22,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
-import { RegisterFormData, registerSchema } from '../types/Auth'
+import { RegisterFormData, registerSchema } from '../types/AuthType'
 
 function RegisterForm() {
    const [showPassword, setShowPassword] = useState(false)
@@ -33,8 +33,7 @@ function RegisterForm() {
    const form = useForm<RegisterFormData>({
       resolver: zodResolver(registerSchema),
       defaultValues: {
-         firstName: '',
-         lastName: '',
+         fullName: '',
          email: '',
          phone: '',
          password: '',
@@ -42,8 +41,11 @@ function RegisterForm() {
       }
    })
 
-   const onSwitchToLogin = (): void => navigate(PATH_URL.LOGIN)
-   const onSubmit = (data: RegisterFormData): void => registerMutation.mutate(data)
+   const handleSwitchToLogin = (): void => navigate(PATH_URL.LOGIN)
+   const onSubmit = (data: RegisterFormData): void => {
+      console.log(data)
+      registerMutation.mutate(data)
+   }
 
    return (
       <Card className='w-full max-w-md'>
@@ -60,7 +62,7 @@ function RegisterForm() {
                      {/* First Name */}
                      <FormField
                         control={form.control}
-                        name='firstName'
+                        name='fullName'
                         render={({ field }) => (
                            <FormItem className='flex-1'>
                               <FormLabel>Họ</FormLabel>
@@ -73,29 +75,6 @@ function RegisterForm() {
                                        className='pl-10'
                                        disabled={registerMutation.isPending}
                                        autoComplete='given-name'
-                                    />
-                                 </div>
-                              </FormControl>
-                              <FormMessage />
-                           </FormItem>
-                        )}
-                     />
-                     {/* Last Name */}
-                     <FormField
-                        control={form.control}
-                        name='lastName'
-                        render={({ field }) => (
-                           <FormItem className='flex-1'>
-                              <FormLabel>Tên</FormLabel>
-                              <FormControl>
-                                 <div className='relative'>
-                                    <User className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                                    <Input
-                                       {...field}
-                                       placeholder='Tên'
-                                       className='pl-10'
-                                       disabled={registerMutation.isPending}
-                                       autoComplete='family-name'
                                     />
                                  </div>
                               </FormControl>
@@ -237,6 +216,7 @@ function RegisterForm() {
 
                   <Button
                      type='submit'
+                     variant='primary'
                      className='w-full'
                      disabled={registerMutation.isPending}
                   >
@@ -246,7 +226,7 @@ function RegisterForm() {
                   <div className='text-center'>
                      <Button
                         variant='link'
-                        onClick={onSwitchToLogin}
+                        onClick={handleSwitchToLogin}
                         disabled={registerMutation.isPending}
                         className='text-sm'
                         type='button'

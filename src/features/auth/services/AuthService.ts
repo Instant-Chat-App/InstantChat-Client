@@ -1,8 +1,10 @@
+import { SERVER_URL } from '@/utils/Constant'
 import { http } from '@/utils/Http'
-import { LoginFormData, RegisterFormData } from '../types/Auth'
+import { AuthResponse } from '../types/AuthResponse'
+import { LoginFormData, RegisterFormData } from '../types/AuthType'
 
-export const login = (payload: Partial<LoginFormData>) =>
-   http.post<LoginFormData>('/auth/login', payload)
+export const login = (payload: LoginFormData) =>
+   http.post<AuthResponse>(`${SERVER_URL}/api/v1/auth/login`, payload)
 
-export const register = (payload: Partial<RegisterFormData>) =>
-   http.post<RegisterFormData>('/auth/register', payload)
+export const register = (payload: RegisterFormData) =>
+   http.post<AuthResponse>(`${SERVER_URL}/api/v1/auth/login`, payload)
