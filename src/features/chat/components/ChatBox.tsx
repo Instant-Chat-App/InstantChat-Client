@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import CommunityDetail from '@/features/community/components/CommunityDetail'
 import { MoreVertical, Phone, Video } from 'lucide-react'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -51,9 +52,11 @@ function ChatBox() {
                <Button variant='ghost' size='icon'>
                   <Video className='h-5 w-5' />
                </Button>
-               <Button variant='ghost' size='icon'>
-                  <MoreVertical className='h-5 w-5' />
-               </Button>
+               <CommunityDetail type='GROUP' communityUpdate={{ name: 'hello' }}>
+                  <Button variant='ghost' size='icon'>
+                     <MoreVertical className='h-5 w-5' />
+                  </Button>
+               </CommunityDetail>
             </div>
          </div>
 

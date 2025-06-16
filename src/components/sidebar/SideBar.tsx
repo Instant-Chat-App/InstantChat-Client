@@ -1,21 +1,31 @@
 import ChatList from '@/features/chat/components/ChatList'
+import ToolButton from '@/features/community/components/ToolButton'
 import { MoreVertical, Search } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 
 function SideBar() {
+   const [show, setShow] = useState<boolean>(false)
+
    return (
-      <div className='min-h-screen w-1/4 border'>
+      <div
+         className='group relative min-h-screen w-1/4 border'
+         onMouseEnter={() => setShow(true)}
+         onMouseLeave={() => setShow(false)}
+      >
          <div className='border-border border-b p-4'>
-            {/* Header Section */}
+            {/* Header */}
             <div className='mb-4 flex items-center justify-between'>
                <h1 className='text-xl font-semibold'>Chats</h1>
-               <Button variant='ghost' size='icon'>
-                  <MoreVertical className='h-5 w-5' />
-               </Button>
+               <div className='flex items-center'>
+                  <Button variant='ghost' size='icon'>
+                     <MoreVertical className='h-5 w-5' />
+                  </Button>
+               </div>
             </div>
 
-            {/* Search Section */}
+            {/* Search */}
             <div className='relative'>
                <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
                <Input
@@ -27,8 +37,11 @@ function SideBar() {
             </div>
          </div>
 
-         {/* Chat List Section */}
+         {/* Chat List */}
          <ChatList />
+
+         {/* Tool Button */}
+         <ToolButton />
       </div>
    )
 }

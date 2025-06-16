@@ -1,14 +1,4 @@
-import {
-   AlertDialog,
-   AlertDialogAction,
-   AlertDialogCancel,
-   AlertDialogContent,
-   AlertDialogDescription,
-   AlertDialogFooter,
-   AlertDialogHeader,
-   AlertDialogTitle,
-   AlertDialogTrigger
-} from '@/components/ui/alert-dialog'
+import ConfirmForm from '@/components/custom/ConfirmForm'
 import { Button } from '@/components/ui/button'
 import {
    Dialog,
@@ -93,30 +83,19 @@ function MessagEditDelete({ message, children }: Props) {
                </DialogContent>
             </Dialog>
 
-            <AlertDialog>
-               <AlertDialogTrigger asChild>
-                  {/*  Delete Message  */}
-                  <button
-                     className='flex w-full items-center gap-3 px-3 py-1 text-sm text-red-500 hover:bg-gray-100'
-                     onClick={handleDelete}
-                  >
-                     <Trash className='size-3' />
-                     <span>Xoá</span>
-                  </button>
-               </AlertDialogTrigger>
-               <AlertDialogContent>
-                  <AlertDialogHeader>
-                     <AlertDialogTitle>Xoá tin nhắn</AlertDialogTitle>
-                     <AlertDialogDescription>
-                        Bạn có chắc chắn muốn xoá tin nhắn này?
-                     </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                     <AlertDialogCancel>Huỷ</AlertDialogCancel>
-                     <AlertDialogAction>Đồng ý</AlertDialogAction>
-                  </AlertDialogFooter>
-               </AlertDialogContent>
-            </AlertDialog>
+            <ConfirmForm
+               title='Delete Message'
+               description='Bạn có chắc muốn xoá tin nhắn này ?'
+               onConfirm={handleDelete}
+            >
+               <button
+                  className='flex w-full items-center gap-3 px-3 py-1 text-sm text-red-500 hover:bg-gray-100'
+                  onClick={handleDelete}
+               >
+                  <Trash className='size-3' />
+                  <span>Xoá</span>
+               </button>
+            </ConfirmForm>
          </PopoverContent>
       </Popover>
    )

@@ -28,9 +28,11 @@ function MessageListReaction({ reactions, children }: Props) {
                <AlertDialogDescription>
                   <ScrollArea className='h-70'>
                      {reactions.map((reaction) => (
-                        <div className='mb-2 flex items-center justify-between'>
+                        <div
+                           className='mb-2 flex items-center justify-between'
+                           key={reaction.reactorId}
+                        >
                            <div className='flex items-center gap-2'>
-                              
                               {/*  Avatar  */}
                               <div className='relative'>
                                  <Avatar className='h-12 w-12'>
