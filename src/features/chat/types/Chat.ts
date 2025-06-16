@@ -10,12 +10,12 @@ export interface MessageReaction {
    reactorName: string 
    reactorId: number
    reactorAvatar?: string
-   timestamp: Date 
+   reactedAt: Date 
 }
 
 export interface ChatMessage {
    messageId: number
-   timestamp: Date
+   createdAt: Date
    isOwner: boolean // true if the message is sent by the current user
    content: string
    senderInfo: {

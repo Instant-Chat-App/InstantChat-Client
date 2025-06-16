@@ -1,7 +1,8 @@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { SmilePlus, Trash } from 'lucide-react'
+import { Ellipsis, SmilePlus } from 'lucide-react'
 import { useState } from 'react'
 import { ChatMessage } from '../types/Chat'
+import MessagEditDelete from './MessagEditDelete'
 import MessageReactionBar from './MessageReactionBar'
 
 interface Props {
@@ -28,16 +29,22 @@ function MessageActionPopover({ children, message }: Props) {
             align='end'
             className='flex w-fit items-center border-0 bg-none p-0 shadow-none outline-none'
          >
-            {/*  React icon and Trash icon  */}
+            {/*  Edit & Delete Message  */}
             <div className='flex items-center gap-1'>
                {message.isOwner && (
-                  <button>
-                     <Trash className='size-5' />
-                  </button>
+                  <MessagEditDelete
+                     message={{ messageId: message.messageId, content: message.content }}
+                  >
+                     <button className='rounded-full bg-gray-200 p-1'>
+                        <Ellipsis className='size-4' />
+                     </button>
+                  </MessagEditDelete>
                )}
+
+               {/*  Show Reaction Bar  */}
                <MessageReactionBar>
-                  <button onClick={() => {}}>
-                     <SmilePlus className='size-5' />
+                  <button className='rounded-full bg-gray-200 p-1'>
+                     <SmilePlus className='size-4' />
                   </button>
                </MessageReactionBar>
             </div>

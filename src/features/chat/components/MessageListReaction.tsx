@@ -30,6 +30,8 @@ function MessageListReaction({ reactions, children }: Props) {
                      {reactions.map((reaction) => (
                         <div className='mb-2 flex items-center justify-between'>
                            <div className='flex items-center gap-2'>
+                              
+                              {/*  Avatar  */}
                               <div className='relative'>
                                  <Avatar className='h-12 w-12'>
                                     <AvatarImage src='https://jbagy.me/wp-content/uploads/2025/03/hinh-anh-cute-avatar-vo-tri-3.jpg' />
@@ -38,9 +40,11 @@ function MessageListReaction({ reactions, children }: Props) {
                                     </AvatarFallback>
                                  </Avatar>
                               </div>
+
+                              {/*  User, Date, Reaction  */}
                               <div className='flex flex-col'>
                                  <div className='font-semibold'>{reaction.reactorName}</div>
-                                 <div>{reaction.timestamp.toDateString()}</div>
+                                 <div>{reaction.reactedAt.toDateString()}</div>
                               </div>
                            </div>
                            <div className='text-[20px]'>
@@ -52,6 +56,7 @@ function MessageListReaction({ reactions, children }: Props) {
                </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
+               {/*  Cancel Button  */}
                <AlertDialogCancel className='border-none bg-red-500 text-white hover:bg-red-500 hover:text-white'>
                   Huỷ
                </AlertDialogCancel>

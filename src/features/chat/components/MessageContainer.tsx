@@ -4,10 +4,10 @@ import MessageBubble from './MessageBubble'
 
 const message: ChatMessage = {
    messageId: 101,
-   timestamp: new Date('2025-06-15T09:30:00'),
-   isOwner: false,
+   createdAt: new Date('2025-06-15T09:30:00'),
+   isOwner: true,
    content:
-      'Chào bạn, đây là demo tin nhắn! sss s ds d sd s ds d sd s s sd sd ss ds d sd s ds d s sd s ds d s sd ssd sds d sd s ds d s ds d sd s s d sd s  sd ',
+      'Chào bạn, đây là demo tin nhắn!',
    senderInfo: {
       senderId: 2,
       senderName: 'Nguyen Kha',
@@ -32,31 +32,31 @@ const message: ChatMessage = {
          emoji: 'LIKE',
          reactorName: 'Khoa',
          reactorId: 1,
-         timestamp: new Date('2025-06-15T09:31:00')
+         reactedAt: new Date('2025-06-15T09:31:00')
       },
       {
          emoji: 'LOVE',
          reactorName: 'Huyền',
          reactorId: 3,
-         timestamp: new Date('2025-06-15T09:31:00')
+         reactedAt: new Date('2025-06-15T09:31:00')
       },
       {
          emoji: 'LAUGH',
          reactorName: 'Minh',
          reactorId: 4,
-         timestamp: new Date('2025-06-15T09:31:00')
+         reactedAt: new Date('2025-06-15T09:31:00')
       },
       {
          emoji: 'LIKE',
          reactorName: 'Kha',
          reactorId: 2,
-         timestamp: new Date('2025-06-15T09:31:00')
+         reactedAt: new Date('2025-06-15T09:31:00')
       },
       {
          emoji: 'SAD',
          reactorName: 'Vân',
          reactorId: 5,
-         timestamp: new Date('2025-06-15T09:31:00')
+         reactedAt: new Date('2025-06-15T09:31:00')
       }
    ]
 }

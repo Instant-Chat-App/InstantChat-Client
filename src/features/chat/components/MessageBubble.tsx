@@ -2,7 +2,6 @@ import { cn } from '@/lib/utils'
 import { caculateReaction } from '@/utils/CalculateReaction'
 import { REVERSE_REACTIONS_MAP } from '@/utils/Constant'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import { useEffect } from 'react'
 import { ChatMessage } from '../types/Chat'
 import MessageActionPopover from './MessageActionPopover'
 import MessageListReaction from './MessageListReaction'
@@ -12,14 +11,8 @@ interface Props {
 }
 
 function MessageBubble({ message }: Props) {
-   const { messageId, timestamp, isOwner, content, senderInfo, attachments, reactions } =
+   const { messageId, createdAt, isOwner, content, senderInfo, attachments, reactions } =
       message
-
-   useEffect(() => {
-      Object.entries(caculateReaction(reactions)).map(([emoji, count]) => {
-         console.log(emoji, count)
-      })
-   })
 
    return (
       <div className={cn('flex w-full gap-1', isOwner ? 'justify-end' : 'justify-start')}>
@@ -36,16 +29,16 @@ function MessageBubble({ message }: Props) {
             </div>
          )}
 
-         {/*  Message Content  */}
          <MessageActionPopover message={message}>
             <div
                className={cn(
-                  'max-w-[45%] flex-1 rounded-2xl px-4 py-2 break-words',
+                  'max-w-[45%] rounded-2xl px-4 py-2 break-words',
                   isOwner ? 'rounded-br-md bg-[#766ac8] text-white' : 'bg-muted rounded-bl-md'
                )}
             >
+               {/*  Message Content  */}
                {isOwner ? (
-                  <p className='text-primary mb-1 text-xs font-medium'>{content}</p>
+                  <p className='text-sm'>{content}</p>
                ) : (
                   <div>
                      <div className='font-semibold text-purple-700'>
@@ -61,32 +54,33 @@ function MessageBubble({ message }: Props) {
                      <button className='mt-2 w-fit hover:cursor-pointer'>
                         {Array.from(caculateReaction(reactions).entries()).map(
                            ([emoji, count]) => (
-                              <div
+                              <button
                                  key={emoji}
                                  className='text-muted-foreground ml-1 inline-flex items-center gap-1 rounded-lg bg-gray-200 px-2 py-[0.5px] text-sm'
                               >
                                  {REVERSE_REACTIONS_MAP.get(emoji)} {count}
-                              </div>
+                              </button>
                            )
                         )}
                      </button>
                   </MessageListReaction>
                )}
 
-               <p
+               {/*  Created At  */}
+               <div
                   className={cn(
                      'mt-1 flex justify-end text-xs',
                      isOwner ? 'text-primary-foreground/70' : 'text-muted-foreground'
                   )}
                >
                   <div>
-                     {timestamp.toLocaleTimeString('vi-VN', {
+                     {createdAt.toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: false
                      })}
                   </div>
-               </p>
+               </div>
             </div>
          </MessageActionPopover>
       </div>
