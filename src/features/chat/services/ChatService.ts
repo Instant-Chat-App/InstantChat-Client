@@ -20,7 +20,6 @@ export const getUserChats = async (): Promise<Chat[]> => {
       headers: {
          'Authorization': `Bearer ${(() => {
                const tokenStr = localStorage.getItem('auth_tokens');
-               console.log('Token:', tokenStr);
                try {
                   return tokenStr ? JSON.parse(tokenStr).accessToken ?? '' : '';
                } catch {
@@ -38,7 +37,6 @@ export const getChatMessages = async (chatId: number): Promise<ChatMessage[]> =>
       headers: {
          'Authorization': `Bearer ${(() => {
                const tokenStr = localStorage.getItem('auth_tokens');
-               console.log('Token:', tokenStr);
                try {
                   return tokenStr ? JSON.parse(tokenStr).accessToken ?? '' : '';
                } catch {

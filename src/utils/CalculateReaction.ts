@@ -1,11 +1,10 @@
 import { Reaction } from '@/features/chat/types/Chat'
 
-export const caculateReaction = (reactions: Reaction[]): Map<string, number> => {
-   const reactionCountMap = new Map<string, number>()
+export const caculateReaction = (reactions: Reaction[]): Record<string, number> => {
+   const reactionCountMap: Record<string, number> = {}
 
    reactions.forEach((reaction) => {
-      const currentCount = reactionCountMap.get(reaction.type) || 0
-      reactionCountMap.set(reaction.type, currentCount + 1)
+      reactionCountMap[reaction.type] = (reactionCountMap[reaction.type] || 0) + 1
    })
 
    return reactionCountMap

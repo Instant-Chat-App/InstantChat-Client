@@ -1,11 +1,24 @@
+import * as React from 'react'
 import { REACTIONS } from '@/utils/Constant'
 import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover'
+import useMessage from '../hooks/useMessage'
+import { Reaction } from '../types/Chat'
 
 interface Props {
    children: React.ReactNode
+   messageId: number
+   chatId: number
 }
 
-function MessageReactionBar({ children }: Props) {
+function MessageReactionBar({ children, messageId, chatId }: Props) {
+   const { reactMessage } = useMessage(chatId);
+
+   const handleReaction = (reactionType: Reaction['type']) => {
+      if (messageId) {
+         reactMessage(messageId, reactionType);
+      }
+   };
+
    return (
       <Popover>
          <PopoverTrigger asChild>{children}</PopoverTrigger>
@@ -19,10 +32,7 @@ function MessageReactionBar({ children }: Props) {
                   <button
                      key={reaction.emoji}
                      className='rounded-md p-1 text-[20px] hover:cursor-pointer hover:bg-gray-200'
-                     onClick={() => {
-                        // Handle reaction click
-                        console.log(`Reacted with ${reaction.emoji}`)
-                     }}
+                     onClick={() => handleReaction(reaction.type)}
                   >
                      {reaction.emoji}
                   </button>
