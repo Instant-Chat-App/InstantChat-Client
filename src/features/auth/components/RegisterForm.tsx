@@ -19,16 +19,92 @@ import { PATH_URL } from '@/utils/Constant'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, ControllerRenderProps } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
 import { RegisterFormData, registerSchema } from '../types/AuthType'
+
+// Định nghĩa các component con có thể tái sử dụng
+interface IconInputProps {
+   field: ControllerRenderProps<RegisterFormData, any>
+   icon: React.ReactNode
+   placeholder: string
+   type?: string
+   disabled: boolean
+   autoComplete?: string
+}
+
+interface PasswordInputProps {
+   field: ControllerRenderProps<RegisterFormData, 'password' | 'confirmPassword'>
+   showPassword: boolean
+   setShowPassword: React.Dispatch<React.SetStateAction<boolean>>
+   placeholder: string
+   disabled: boolean
+   autoComplete?: string
+}
+
+const IconInput: React.FC<IconInputProps> = ({
+   field,
+   icon,
+   placeholder,
+   type = 'text',
+   disabled,
+   autoComplete
+}) => (
+   <div className='relative'>
+      <div className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform'>
+         {icon}
+      </div>
+      <Input
+         {...field}
+         placeholder={placeholder}
+         className='pl-10'
+         type={type}
+         disabled={disabled}
+         autoComplete={autoComplete}
+      />
+   </div>
+)
+
+const PasswordInput: React.FC<PasswordInputProps> = ({
+   field,
+   showPassword,
+   setShowPassword,
+   placeholder,
+   disabled,
+   autoComplete
+}) => (
+   <div className='relative'>
+      <Lock className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+      <Input
+         {...field}
+         placeholder={placeholder}
+         className='pr-10 pl-10'
+         type={showPassword ? 'text' : 'password'}
+         disabled={disabled}
+         autoComplete={autoComplete}
+      />
+      <Button
+         type='button'
+         variant='ghost'
+         size='icon'
+         className='absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 transform'
+         onClick={() => setShowPassword((prev) => !prev)}
+         tabIndex={-1}
+         disabled={disabled}
+      >
+         {showPassword ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
+      </Button>
+   </div>
+)
 
 function RegisterForm() {
    const [showPassword, setShowPassword] = useState(false)
    const [showConfirm, setShowConfirm] = useState(false)
    const navigate = useNavigate()
    const { registerMutation } = useAuth()
+
+   const isLoading = registerMutation.isPending
 
    const form = useForm<RegisterFormData>({
       resolver: zodResolver(registerSchema),
@@ -42,9 +118,13 @@ function RegisterForm() {
    })
 
    const handleSwitchToLogin = (): void => navigate(PATH_URL.LOGIN)
+
    const onSubmit = (data: RegisterFormData): void => {
-      console.log(data)
-      registerMutation.mutate(data)
+      registerMutation.mutate(data, {
+         onError: (error) => {
+            console.error('Registration error:', error)
+         }
+      })
    }
 
    return (
@@ -52,37 +132,32 @@ function RegisterForm() {
          <CardHeader className='space-y-1'>
             <CardTitle className='text-center text-2xl font-bold'>Tạo tài khoản</CardTitle>
             <CardDescription className='text-center'>
-               Đăng ký để bắt đầu sử dụng dich vụ của chúng tôi.
+               Đăng ký để bắt đầu sử dụng dịch vụ của chúng tôi.
             </CardDescription>
          </CardHeader>
          <CardContent>
             <Form {...form}>
                <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                  <div className='flex gap-2'>
-                     {/* First Name */}
-                     <FormField
-                        control={form.control}
-                        name='fullName'
-                        render={({ field }) => (
-                           <FormItem className='flex-1'>
-                              <FormLabel>Họ</FormLabel>
-                              <FormControl>
-                                 <div className='relative'>
-                                    <User className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                                    <Input
-                                       {...field}
-                                       placeholder='Họ'
-                                       className='pl-10'
-                                       disabled={registerMutation.isPending}
-                                       autoComplete='given-name'
-                                    />
-                                 </div>
-                              </FormControl>
-                              <FormMessage />
-                           </FormItem>
-                        )}
-                     />
-                  </div>
+                  {/* Full Name */}
+                  <FormField
+                     control={form.control}
+                     name='fullName'
+                     render={({ field }) => (
+                        <FormItem>
+                           <FormLabel>Họ và tên</FormLabel>
+                           <FormControl>
+                              <IconInput
+                                 field={field}
+                                 icon={<User className='h-4 w-4' />}
+                                 placeholder='Nhập họ và tên'
+                                 disabled={isLoading}
+                                 autoComplete='name'
+                              />
+                           </FormControl>
+                           <FormMessage />
+                        </FormItem>
+                     )}
+                  />
 
                   {/* Email */}
                   <FormField
@@ -92,17 +167,14 @@ function RegisterForm() {
                         <FormItem>
                            <FormLabel>Email</FormLabel>
                            <FormControl>
-                              <div className='relative'>
-                                 <Mail className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                                 <Input
-                                    {...field}
-                                    placeholder='Nhập email'
-                                    className='pl-10'
-                                    type='email'
-                                    disabled={registerMutation.isPending}
-                                    autoComplete='email'
-                                 />
-                              </div>
+                              <IconInput
+                                 field={field}
+                                 icon={<Mail className='h-4 w-4' />}
+                                 placeholder='Nhập email'
+                                 type='email'
+                                 disabled={isLoading}
+                                 autoComplete='email'
+                              />
                            </FormControl>
                            <FormMessage />
                         </FormItem>
@@ -117,17 +189,14 @@ function RegisterForm() {
                         <FormItem>
                            <FormLabel>Số điện thoại</FormLabel>
                            <FormControl>
-                              <div className='relative'>
-                                 <Phone className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                                 <Input
-                                    {...field}
-                                    placeholder='Nhập số điện thoại'
-                                    className='pl-10'
-                                    type='tel'
-                                    disabled={registerMutation.isPending}
-                                    autoComplete='tel'
-                                 />
-                              </div>
+                              <IconInput
+                                 field={field}
+                                 icon={<Phone className='h-4 w-4' />}
+                                 placeholder='Nhập số điện thoại'
+                                 type='tel'
+                                 disabled={isLoading}
+                                 autoComplete='tel'
+                              />
                            </FormControl>
                            <FormMessage />
                         </FormItem>
@@ -142,32 +211,14 @@ function RegisterForm() {
                         <FormItem>
                            <FormLabel>Mật khẩu</FormLabel>
                            <FormControl>
-                              <div className='relative'>
-                                 <Lock className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                                 <Input
-                                    {...field}
-                                    placeholder='Tạo mật khẩu'
-                                    className='pr-10 pl-10'
-                                    type={showPassword ? 'text' : 'password'}
-                                    disabled={registerMutation.isPending}
-                                    autoComplete='new-password'
-                                 />
-                                 <Button
-                                    type='button'
-                                    variant='ghost'
-                                    size='icon'
-                                    className='absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 transform'
-                                    onClick={() => setShowPassword((prev) => !prev)}
-                                    tabIndex={-1}
-                                    disabled={registerMutation.isPending}
-                                 >
-                                    {showPassword ? (
-                                       <EyeOff className='h-4 w-4' />
-                                    ) : (
-                                       <Eye className='h-4 w-4' />
-                                    )}
-                                 </Button>
-                              </div>
+                              <PasswordInput
+                                 field={field}
+                                 showPassword={showPassword}
+                                 setShowPassword={setShowPassword}
+                                 placeholder='Tạo mật khẩu'
+                                 disabled={isLoading}
+                                 autoComplete='new-password'
+                              />
                            </FormControl>
                            <FormMessage />
                         </FormItem>
@@ -182,32 +233,14 @@ function RegisterForm() {
                         <FormItem>
                            <FormLabel>Nhập lại mật khẩu</FormLabel>
                            <FormControl>
-                              <div className='relative'>
-                                 <Lock className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                                 <Input
-                                    {...field}
-                                    placeholder='Nhập lại mật khẩu'
-                                    className='pr-10 pl-10'
-                                    type={showConfirm ? 'text' : 'password'}
-                                    disabled={registerMutation.isPending}
-                                    autoComplete='new-password'
-                                 />
-                                 <Button
-                                    type='button'
-                                    variant='ghost'
-                                    size='icon'
-                                    className='absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 transform'
-                                    onClick={() => setShowConfirm((prev) => !prev)}
-                                    tabIndex={-1}
-                                    disabled={registerMutation.isPending}
-                                 >
-                                    {showConfirm ? (
-                                       <EyeOff className='h-4 w-4' />
-                                    ) : (
-                                       <Eye className='h-4 w-4' />
-                                    )}
-                                 </Button>
-                              </div>
+                              <PasswordInput
+                                 field={field}
+                                 showPassword={showConfirm}
+                                 setShowPassword={setShowConfirm}
+                                 placeholder='Nhập lại mật khẩu'
+                                 disabled={isLoading}
+                                 autoComplete='new-password'
+                              />
                            </FormControl>
                            <FormMessage />
                         </FormItem>
@@ -218,16 +251,16 @@ function RegisterForm() {
                      type='submit'
                      variant='primary'
                      className='w-full'
-                     disabled={registerMutation.isPending}
+                     disabled={isLoading}
                   >
-                     {registerMutation.isPending ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
+                     {isLoading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
                   </Button>
 
                   <div className='text-center'>
                      <Button
                         variant='link'
                         onClick={handleSwitchToLogin}
-                        disabled={registerMutation.isPending}
+                        disabled={isLoading}
                         className='text-sm'
                         type='button'
                      >
