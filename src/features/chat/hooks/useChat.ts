@@ -22,36 +22,56 @@ function useChat() {
         staleTime: 1000 * 60, // giữ cache trong 1 phút
     })
 
-    //Join multiple chats on socket connection
+    // Join all available chats on socket connection
     useEffect(() => {
         const socket = getSocket()
         if (!socket || !chats || chats.length === 0) return
 
-        const chatIds = chats.map(chat => chat.chatId || chat.chatId)
+        // Join all chats to receive updates
+        const chatIds = chats.map(chat => chat.chatId)
         socket.emit("joinMultipleChats", chatIds)
+
+        return () => {
+            // Cleanup: leave all chats when unmounting
+            if (socket.connected) {
+                socket.emit("leaveAllChats")
+            }
+        }
     }, [chats])
 
-    // Chat socket event listeners
+    // Listen to all chat events regardless of current active chat
     useEffect(() => {
         const socket = getSocket();
         if (!socket) return;
 
-        const handleMessageChange = (payload: { chatId: number }) => {
-            queryClient.invalidateQueries({ queryKey: ['chatMessages', payload.chatId] });
+        const handleChatUpdate = () => {
+            // Invalidate and refetch chats when any chat is updated
+            queryClient.invalidateQueries({ queryKey: ['chats'] });
         };
 
-        socket.on("newMessage", handleMessageChange);
-        socket.on("messageEdited", handleMessageChange);
-        socket.on("messageDeleted", handleMessageChange);
-        socket.on("messageReacted", handleMessageChange);
-        socket.on("reactionDeleted", handleMessageChange);
+        // Listen for any message events in any chat
+        socket.on("newMessage", handleChatUpdate);
+        socket.on("messageEdited", handleChatUpdate);
+        socket.on("messageDeleted", handleChatUpdate);
+        socket.on("messageReacted", handleChatUpdate);
+        socket.on("reactionDeleted", handleChatUpdate);
+
+        // Listen for chat update events
+        socket.on("chatUpdated", handleChatUpdate);
+        socket.on("memberJoined", handleChatUpdate);
+        socket.on("memberLeft", handleChatUpdate);
+        socket.on("chatDeleted", handleChatUpdate);
 
         return () => {
-            socket.off("newMessage", handleMessageChange);
-            socket.off("messageEdited", handleMessageChange);
-            socket.off("messageDeleted", handleMessageChange);
-            socket.off("messageReacted", handleMessageChange);
-            socket.off("reactionDeleted", handleMessageChange);
+            socket.off("newMessage", handleChatUpdate);
+            socket.off("messageEdited", handleChatUpdate);
+            socket.off("messageDeleted", handleChatUpdate);
+            socket.off("messageReacted", handleChatUpdate);
+            socket.off("reactionDeleted", handleChatUpdate);
+            socket.off("chatUpdated", handleChatUpdate);
+            socket.off("memberJoined", handleChatUpdate);
+            socket.off("memberLeft", handleChatUpdate);
+            socket.off("chatDeleted", handleChatUpdate);
         };
     }, [queryClient]);
 
