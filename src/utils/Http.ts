@@ -20,5 +20,9 @@ export const http = {
    delete: async <T>(url: string): Promise<DataResponse<T>> => {
       const res = await axiosInstance.delete<DataResponse<T>>(url)
       return res.data
+   },
+   patch: async <T, D = unknown>(url: string, data: D): Promise<DataResponse<T>> => {
+      const res = await axiosInstance.patch<DataResponse<T>>(url, data)
+      return res.data
    }
 }
