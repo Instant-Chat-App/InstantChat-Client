@@ -23,3 +23,9 @@ export interface UpdateProfileData {
    gender: 'MALE' | 'FEMALE'
    bio?: string | null
 }
+
+export interface ChangePasswordData {
+   currentPassword: string
+   newPassword: string
+   confirmPassword: string
+}
