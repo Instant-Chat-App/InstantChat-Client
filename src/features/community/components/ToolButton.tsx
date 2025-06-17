@@ -2,6 +2,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils'
 import { BellRing, PenIcon, UserRound, UsersRound } from 'lucide-react'
 import { CreateCommunityForm } from './CreateCommunityForm'
+import CreatePrivateForm from './CreatePrivateForm'
 
 function ToolButton() {
    return (
@@ -36,12 +37,15 @@ function ToolButton() {
                      </button>
                   </CreateCommunityForm>
 
-                  <button className='flex w-full items-center gap-3 rounded px-3 py-1 hover:bg-gray-200'>
-                     <div>
-                        <UserRound className='size-4' />
-                     </div>
-                     <div>New Message</div>
-                  </button>
+                  {/*  Create Message  */}
+                  <CreatePrivateForm>
+                     <button className='flex w-full items-center gap-3 rounded px-3 py-1 hover:bg-gray-200'>
+                        <div>
+                           <UserRound className='size-4' />
+                        </div>
+                        <div>New Message</div>
+                     </button>
+                  </CreatePrivateForm>
                </div>
             </PopoverContent>
          </Popover>

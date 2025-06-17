@@ -34,7 +34,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
    const form = useForm({
       resolver: zodResolver(communityFormSchema),
       defaultValues: {
-         name: '',
+         chatName: '',
          coverImage: '',
          description: '',
          type: type
@@ -57,7 +57,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
    return (
       <Dialog>
          <DialogTrigger>{children}</DialogTrigger>
-         <DialogContent>   
+         <DialogContent>
             <DialogHeader>
                <DialogTitle>{type === 'CHANNEL' ? 'New Channel' : 'New Group'}</DialogTitle>
             </DialogHeader>
@@ -77,7 +77,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
                                        alt='Group Cover'
                                     />
                                     <AvatarFallback className='text-lg'>
-                                       {form.getValues('name')?.charAt(0) || ''}
+                                       {form.getValues('chatName')?.charAt(0) || ''}
                                     </AvatarFallback>
                                  </Avatar>
                                  <Button
@@ -105,7 +105,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
                   {/* Community Name */}
                   <FormField
                      control={form.control}
-                     name='name'
+                     name='chatName'
                      render={({ field }) => (
                         <FormItem>
                            <FormLabel>{type === 'GROUP' ? 'Tên nhóm' : 'Tên kênh'}</FormLabel>
@@ -134,7 +134,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
 
                   {/* Nút Submit */}
                   <DialogFooter>
-                     <Button type='submit' className='w-full'>
+                     <Button type='submit' className='w-full' variant='primary'>
                         Đồng ý
                      </Button>
                   </DialogFooter>

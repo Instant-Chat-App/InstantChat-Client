@@ -2,20 +2,38 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import CommunityDetail from '@/features/community/components/CommunityDetail'
+import { CommunityDetailType } from '@/features/community/types/Community'
 import { MoreVertical, Phone, Video } from 'lucide-react'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ChatInput from './ChatInput'
 import MessageContainer from './MessageContainer'
 
+const detail: CommunityDetailType = {
+   chatId: 1,
+   chatName: 'Frontend Developers',
+   coverImage: 'https://randomuser.me/api/portraits/lego/2.jpg',
+   description: 'A place for frontend enthusiasts to share tips, tricks, and resources.',
+   type: 'GROUP',
+   members: [
+      {
+         memberId: 1,
+         memberName: 'Alice Smith',
+         memberAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+         isOwner: true
+      },
+      {
+         memberId: 2,
+         memberName: 'Bob Johnson',
+         memberAvatar: 'https://randomuser.me/api/portraits/men/45.jpg',
+         isOwner: false
+      }
+   ]
+}
+
 function ChatBox() {
    const [searchParams] = useSearchParams()
    const chatId = searchParams.get('id')
-   const chatTypes = new Map<string, string>([
-      ['PRIVATE', 'red'],
-      ['GROUP', 'Jane Smith'],
-      ['CHANNEL', 'Alice Johnson']
-   ])
 
    // const selectedChatName = chatNames.get(chatId) || 'Unknown User';
 
@@ -52,7 +70,7 @@ function ChatBox() {
                <Button variant='ghost' size='icon'>
                   <Video className='h-5 w-5' />
                </Button>
-               <CommunityDetail type='GROUP' communityUpdate={{ name: 'hello' }}>
+               <CommunityDetail detail={detail}>
                   <Button variant='ghost' size='icon'>
                      <MoreVertical className='h-5 w-5' />
                   </Button>

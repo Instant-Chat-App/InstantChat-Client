@@ -9,7 +9,6 @@ import {
    FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
    Sheet,
    SheetContent,
@@ -21,24 +20,31 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Camera, UsersRound } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import * as React from 'react'
 import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
-import { UpdateCommunityFormData, updateCommunityFormSchema } from '../types/Community'
+import {
+   CommunityDetailType,
+   UpdateCommunityFormData,
+   updateCommunityFormSchema
+} from '../types/Community'
+import MemberList from './MemberList'
 
 interface Props {
    children: React.ReactNode
-   communityUpdate: UpdateCommunityFormData
-   type: 'GROUP' | 'CHANNEL'
+   detail: CommunityDetailType
 }
 
-function CommunityDetail({ type, communityUpdate, children }: Props) {
+function CommunityDetail({ detail, children }: Props) {
    const fileInputRef = useRef<HTMLInputElement>(null)
+   const isOwner = detail.members.some((member) => member.memberId === 3)
    const form = useForm<UpdateCommunityFormData>({
       resolver: zodResolver(updateCommunityFormSchema),
       defaultValues: {
-         ...communityUpdate
+         chatName: detail.chatName || '',
+         description: detail.description || '',
+         coverImage: detail.coverImage || ''
       }
    })
 
@@ -63,7 +69,6 @@ function CommunityDetail({ type, communityUpdate, children }: Props) {
                <SheetTitle>Detail</SheetTitle>
             </SheetHeader>
             <div className='p-3'>
-               {' '}
                <Form {...form}>
                   <form
                      onSubmit={form.handleSubmit(onSubmit)}
@@ -85,8 +90,10 @@ function CommunityDetail({ type, communityUpdate, children }: Props) {
                                           alt='Group Cover'
                                        />
                                        <AvatarFallback className='bg-green-400 text-[50px] text-white'>
-                                          {form.getValues('name')?.charAt(0).toUpperCase() ||
-                                             ''}
+                                          {form
+                                             .getValues('chatName')
+                                             ?.charAt(0)
+                                             .toUpperCase() || ''}
                                        </AvatarFallback>
                                     </Avatar>
                                     <Button
@@ -113,11 +120,11 @@ function CommunityDetail({ type, communityUpdate, children }: Props) {
                      {/* Community Name */}
                      <FormField
                         control={form.control}
-                        name='name'
+                        name='chatName'
                         render={({ field }) => (
                            <FormItem>
                               <FormLabel>
-                                 {type === 'GROUP' ? 'Tên nhóm' : 'Tên kênh'}
+                                 {detail.type === 'GROUP' ? 'Tên nhóm' : 'Tên kênh'}
                               </FormLabel>
                               <FormControl>
                                  <Input {...field} className='text-black' />
@@ -141,16 +148,13 @@ function CommunityDetail({ type, communityUpdate, children }: Props) {
                         )}
                      />
 
-                     <div className='flex w-full items-center justify-center gap-2 pt-2 font-medium'>
-                        <UsersRound className='size-4' /> <div>Members</div>
-                     </div>
-                     <ScrollArea className='max-h-[200px] w-full'>sdssd s sd sd sd s d sd s d sd s d sd s d sds ds  sd </ScrollArea>
-
-                     {/* Đặt SheetFooter bên trong form để nút submit hoạt động */}
+                     {/*  List Members  */}
+                     <MemberList isOwner={isOwner} detail={detail} />
                   </form>
                </Form>
             </div>
             <SheetFooter>
+               {/*  Submit change  */}
                <button
                   type='submit'
                   className={cn(
