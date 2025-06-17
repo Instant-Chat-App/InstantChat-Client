@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { login, register } from '../services/AuthService'
+import { forgotPassword, login, register, resetPassword } from '../services/AuthService'
 import { useNavigate } from 'react-router-dom'
 import { LoginFormData, RegisterFormData } from '../types/AuthType'
 import { PATH_URL } from '@/utils/Constant'
-import { AuthResponse } from '../types/AuthResponse'
+import { AuthResponse, ResetPasswordData } from '../types/auth'
 import { toast } from 'sonner'
 import { disconnectSocket, initializeSocket } from '@/socket/socket-io'
 
@@ -82,6 +82,26 @@ function useAuth() {
       }
    })
 
+   const resetPasswordMutation = useMutation({
+      mutationFn: (data: ResetPasswordData) => resetPassword(data),
+      onSuccess: (response) => {
+         if (response.success) {
+            toast.success('Đặt lại mật khẩu thành công', {
+               description: 'Vui lòng đăng nhập bằng mật khẩu mới'
+            })
+         } else {
+            toast.error('Đặt lại mật khẩu thất bại', {
+               description: response.message || 'Vui lòng kiểm tra lại thông tin đã nhập'
+            })
+         }
+      },
+      onError: (error: any) => {
+         toast.error('Đặt lại mật khẩu thất bại', {
+            description: error.response?.data?.message || 'Đã xảy ra lỗi khi xử lý yêu cầu'
+         })
+      }
+   })
+
    // Hàm logout
    const logout = () => {
       // Disconnect socket before clearing auth data
@@ -106,9 +126,31 @@ function useAuth() {
       return JSON.parse(tokensString) as AuthResponse
    }
 
+   const forgotPasswordMutation = useMutation({
+      mutationFn: (phone: string) => forgotPassword(phone),
+      onSuccess: (response) => {
+         if (response.success) {
+            toast.success('Đã gửi mã OTP', {
+               description: 'Vui lòng kiểm tra điện thoại của bạn để lấy mã OTP'
+            })
+         } else {
+            toast.error('Không thể gửi mã OTP', {
+               description: response.message || 'Vui lòng kiểm tra lại số điện thoại'
+            })
+         }
+      },
+      onError: (error: any) => {
+         toast.error('Không thể gửi mã OTP', {
+            description: error.response?.data?.message || 'Đã xảy ra lỗi khi gửi yêu cầu'
+         })
+      }
+   })
+
    return {
       loginMutation,
       registerMutation,
+      forgotPasswordMutation,
+      resetPasswordMutation,
       logout,
       isAuthenticated,
       getTokens

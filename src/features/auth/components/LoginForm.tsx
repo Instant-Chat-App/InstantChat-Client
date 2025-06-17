@@ -100,6 +100,8 @@ function LoginForm() {
 
    const handleSwitchToRegister = (): void => navigate(PATH_URL.REGISTER)
 
+   const handleSwitchToForgotPassword = (): void => navigate(PATH_URL.FORGOT_PASSWORD)
+
    return (
       <Card className='w-full max-w-md'>
          <CardHeader className='space-y-1'>
@@ -156,8 +158,8 @@ function LoginForm() {
                      {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                   </Button>
 
-                  {/* LINK ĐĂNG KÝ */}
-                  <div className='text-center'>
+                  {/* LINKS - Nút Đăng ký và Quên mật khẩu */}
+                  <div className='flex justify-between'>
                      <Button
                         variant='link'
                         onClick={handleSwitchToRegister}
@@ -165,7 +167,16 @@ function LoginForm() {
                         className='text-sm'
                         type='button'
                      >
-                        Chưa có tài khoản? Đăng ký
+                        Đăng ký
+                     </Button>
+                     <Button
+                        variant='link'
+                        onClick={handleSwitchToForgotPassword}
+                        disabled={isLoading}
+                        className='text-sm'
+                        type='button'
+                     >
+                        Quên mật khẩu
                      </Button>
                   </div>
                </form>

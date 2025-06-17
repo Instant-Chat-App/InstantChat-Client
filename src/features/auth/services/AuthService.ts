@@ -1,7 +1,7 @@
 import { SERVER_URL } from '@/utils/Constant'
 import { http } from '@/utils/Http'
-import { AuthResponse } from '../types/AuthResponse'
-import { LoginFormData, RegisterFormData, UserProfile } from '../types/AuthType'
+import { AuthResponse, ResetPasswordData, UserProfile } from '../types/auth'
+import { LoginFormData, RegisterFormData } from '../types/AuthType'
 
 import { axiosInstance } from '@/lib/Axios'
 import { DataResponse } from '@/types/DataResponse'
@@ -24,19 +24,31 @@ export const logout = (): Promise<DataResponse<null>> => {
 }
 
 export const getCurrentUser = async (): Promise<DataResponse<UserProfile>> => {
-   const response = await axiosInstance.get<DataResponse<UserProfile>>(`${SERVER_URL}/api/auth/profile`,{
-      headers: {
-         'Authorization': `Bearer ${(() => {
-               const tokenStr = localStorage.getItem('auth_tokens');
+   const response = await axiosInstance.get<DataResponse<UserProfile>>(
+      `${SERVER_URL}/api/auth/profile`,
+      {
+         headers: {
+            Authorization: `Bearer ${(() => {
+               const tokenStr = localStorage.getItem('auth_tokens')
                try {
-                  return tokenStr ? JSON.parse(tokenStr).accessToken ?? '' : '';
+                  return tokenStr ? (JSON.parse(tokenStr).accessToken ?? '') : ''
                } catch {
-                  return '';
+                  return ''
                }
-            })()
-            }`
+            })()}`
+         }
       }
-   })
+   )
 
-   return response.data;
+   return response.data
+}
+
+export const forgotPassword = (phone: string): Promise<DataResponse<null>> => {
+   return http.post<null, { phone: string }>(`${SERVER_URL}/api/auth/forgot-password`, {
+      phone
+   })
+}
+
+export const resetPassword = (data: ResetPasswordData): Promise<DataResponse<null>> => {
+   return http.post<null, ResetPasswordData>(`${SERVER_URL}/api/auth/reset-password`, data)
 }

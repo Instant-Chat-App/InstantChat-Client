@@ -4,7 +4,9 @@ export const PATH_URL = {
    CHAT_PAGE: '/',
    AUTH_PAGE: '/auth',
    LOGIN: '/auth/login',
-   REGISTER: '/auth/register'
+   REGISTER: '/auth/register',
+   FORGOT_PASSWORD: '/auth/forgot-password',
+   RESET_PASSWORD: '/auth/reset-password'
 }
 
 export const REACTIONS = [
