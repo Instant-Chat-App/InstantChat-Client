@@ -1,4 +1,4 @@
-interface UserInfo {
+export interface UserInfo {
    id: number
    fullName: string
    phone: string
@@ -8,11 +8,18 @@ interface UserInfo {
    avatar: string
    bio: string
 }
-
-interface UserContact {
+export interface UserContact {
    contactId: number
    fullName: string
    avatar: string
    phone: string
    isContact: boolean
+}
+
+export interface UpdateProfileData {
+   fullName: string
+   email: string
+   dob: string
+   gender: 'MALE' | 'FEMALE'
+   bio?: string | null
 }
