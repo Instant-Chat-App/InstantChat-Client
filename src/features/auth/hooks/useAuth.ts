@@ -18,21 +18,19 @@ function useAuth() {
       mutationFn: (data: LoginFormData) => login(data),
       onSuccess: (response) => {
          if (response.success && response.data) {
-            // Lưu tokens vào localStorage
             localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response.data))
 
-            // Cập nhật cache hoặc state global nếu cần
             queryClient.invalidateQueries({ queryKey: ['user'] })
 
-            // Điều hướng đến trang chính sau khi đăng nhập thành công
             navigate(PATH_URL.CHAT_PAGE)
          } else {
-            // Xử lý trường hợp API trả về success = false
             setError(response.message || 'Đăng nhập thất bại')
          }
       },
       onError: (error: any) => {
-         setError(error?.message || 'Lỗi kết nối server')
+         console.error('Login API error:', error)
+         const apiErrorMessage = error.response?.data?.message
+         setError(apiErrorMessage || error?.message || 'Lỗi kết nối server')
       }
    })
 
@@ -46,7 +44,8 @@ function useAuth() {
          }
       },
       onError: (error: any) => {
-         setError(error?.message || 'Lỗi kết nối server')
+         const apiErrorMessage = error.response?.data?.message
+         setError(apiErrorMessage || error?.message || 'Lỗi kết nối server')
       }
    })
 
