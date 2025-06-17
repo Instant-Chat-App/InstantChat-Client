@@ -1,13 +1,20 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Paperclip, Send, Smile } from 'lucide-react'
+import { Paperclip, Send, Smile, File, FileImage, FileVideo, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import EmojiPicker from './EmojiPicker'
 import useMessage from '../hooks/useMessage'
 
-function ChatInput({chatId}: { chatId: number | null }) {
+interface FileAttachment {
+   fileName: string;
+   mimeType: string;
+   base64Data: string;
+}
+
+function ChatInput({ chatId }: { chatId: number | null }) {
    const [message, setMessage] = useState<string>('')
-   const [attachments, setAttachments] = useState<File[]>([])
+   const [attachments, setAttachments] = useState<FileAttachment[]>([])
+   const [previewFiles, setPreviewFiles] = useState<File[]>([])
    const fileInputRef = useRef<HTMLInputElement>(null)
 
    const messageUtils = useMessage(chatId);
@@ -20,43 +27,115 @@ function ChatInput({chatId}: { chatId: number | null }) {
       }
    }
 
-   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files) {
-         const files = Array.from(e.target.files)
-         files.forEach((file) => {
-            console.log('Tên file:', file.name)
-            console.log('Loại MIME:', file.type)
-            console.log('Kích thước:', file.size, 'bytes')
-         })
-         setAttachments((prev) => [...prev, ...Array.from(e.target.files!)])
-         e.target.value = ''
+   const toBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+         const reader = new FileReader();
+         reader.onload = () => resolve(reader.result as string);
+         reader.onerror = reject;
+         reader.readAsDataURL(file);
+      });
+   };
+
+   const getFileIcon = (mimeType: string) => {
+      if (mimeType.startsWith('image/')) return <FileImage className="h-5 w-5" />;
+      if (mimeType.startsWith('video/')) return <FileVideo className="h-5 w-5" />;
+      return <File className="h-5 w-5" />;
+   };
+
+   const getFilePreview = (file: File) => {
+      if (file.type.startsWith('image/')) {
+         return (
+            <img
+               src={URL.createObjectURL(file)}
+               alt={file.name}
+               className='h-20 w-20 rounded object-cover'
+            />
+         );
       }
-   }
+      if (file.type.startsWith('video/')) {
+         return (
+            <video 
+               src={URL.createObjectURL(file)} 
+               className='h-20 w-20 rounded object-cover'
+               controls
+            />
+         );
+      }
+      return (
+         <div className='flex h-20 w-20 flex-col items-center justify-center rounded bg-gray-100 p-2'>
+            {getFileIcon(file.type)}
+            <span className='mt-1 line-clamp-1 max-w-[80px] overflow-hidden text-xs'>
+               {file.name}
+            </span>
+         </div>
+      );
+   };
+
+   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.files) return;
+
+      const files = Array.from(e.target.files);
+      
+      // Validate file types and sizes
+      const validFiles = files.filter(file => {
+         const isValidType = file.type.startsWith('image/') || 
+                           file.type.startsWith('video/') || 
+                           file.type.startsWith('application/') ||
+                           file.type.startsWith('text/');
+         const isValidSize = file.size <= 25 * 1024 * 1024; // 25MB limit
+         return isValidType && isValidSize;
+      });
+
+      if (validFiles.length !== files.length) {
+         alert('Some files were skipped. Please ensure files are under 25MB and are of valid types.');
+      }
+
+      setPreviewFiles(prev => [...prev, ...validFiles]);
+
+      const base64Attachments = await Promise.all(
+         validFiles.map(async (file) => ({
+            fileName: file.name,
+            mimeType: file.type,
+            base64Data: await toBase64(file),
+         }))
+      );
+
+      setAttachments(prev => [...prev, ...base64Attachments]);
+      e.target.value = '';
+   };
 
    const handleRemoveFile = (idx: number) => {
-      setAttachments((prev) => prev.filter((_, i) => i !== idx))
+      setAttachments(prev => prev.filter((_, i) => i !== idx));
+      setPreviewFiles(prev => prev.filter((_, i) => i !== idx));
    }
 
    const handleSendMessage = async () => {
-      if (!message.trim() && attachments.length === 0) return
-
-      console.log('Sending message:', message, 'with attachments:', attachments)
+      if (!message.trim() && attachments.length === 0) return;
 
       try {
-         await messageUtils.sendMessage(message, attachments)
-         setMessage('')
-         setAttachments([])
+         await messageUtils.sendMessage(message, attachments);
+         setMessage('');
+         setAttachments([]);
+         setPreviewFiles([]);
       } catch (error) {
-         console.error('Error sending message:', error)
+         console.error('Error sending message:', error);
       }
-
-      
    }
 
    return (
       <div className='p-4'>
          <div className='flex items-end gap-2'>
-            {/* File Attachments */}
+            {/* File input */}
+            <input
+               type="file"
+               ref={fileInputRef}
+               onChange={handleFileChange}
+               className="hidden"
+               multiple
+               accept="image/*,video/*,application/*,text/*"
+            />
+            
+            {/* File Attachments Button */}
             <Button
                variant='ghost'
                size='icon'
@@ -100,44 +179,23 @@ function ChatInput({chatId}: { chatId: number | null }) {
          </div>
 
          {/* File Preview */}
-         {attachments.length > 0 && (
-            <div className='mt-2 flex flex-wrap gap-2'>
-               {attachments.map((file, idx) => (
-                  <div key={idx} className='relative'>
-                     {file.type.startsWith('image') ? (
-                        <img
-                           src={URL.createObjectURL(file)}
-                           alt={file.name}
-                           className='h-12 w-12 rounded object-cover'
-                        />
-                     ) : (
-                        <div className='flex h-12 w-12 items-center justify-center rounded bg-gray-100'>
-                           <span className='line-clamp-1 max-w-[50px] overflow-hidden text-xs'>
-                              {file.name}
-                           </span>
-                        </div>
-                     )}
+         {previewFiles.length > 0 && (
+            <div className='mt-4 flex flex-wrap gap-3'>
+               {previewFiles.map((file, idx) => (
+                  <div key={idx} className='relative group'>
+                     {getFilePreview(file)}
                      <Button
-                        className='absolute -top-2 -right-2'
+                        variant="destructive"
+                        size="icon"
+                        className='absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity'
                         onClick={() => handleRemoveFile(idx)}
-                        type='button'
                      >
-                        ×
+                        <X className='h-3 w-3' />
                      </Button>
                   </div>
                ))}
             </div>
          )}
-
-         {/* Hidden File Input */}
-         <input
-            ref={fileInputRef}
-            type='file'
-            multiple
-            accept='*/*'
-            className='hidden'
-            onChange={handleFileChange}
-         />
       </div>
    )
 }

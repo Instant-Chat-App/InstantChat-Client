@@ -6,6 +6,12 @@ import { useEffect } from "react"
 import { ChatMessage } from "../types/Chat"
 import { getCurrentUser } from "@/features/auth/services/AuthService"
 
+interface FileAttachment {
+    fileName: string;
+    mimeType: string;
+    base64Data: string;
+}
+
 function useMessage(chatId: number | null) {
     const [error, setError] = useState<string | null>(null)
     const queryClient = useQueryClient()
@@ -50,7 +56,7 @@ function useMessage(chatId: number | null) {
 
     // Listen to real-time socket events
     const sendMessage = useCallback(
-        (content: string, attachments?: File[], replyTo?: number) => {
+        (content: string, attachments?: FileAttachment[], replyTo?: number) => {
             const socket = getSocket();
             if (!socket || !chatId) return;
 
