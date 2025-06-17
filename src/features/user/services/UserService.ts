@@ -1,7 +1,7 @@
 import { DataResponse } from '@/types/DataResponse'
 import { SERVER_URL } from '@/utils/Constant'
 import { http } from '@/utils/Http'
-import { UserInfo, UpdateProfileData } from '../types/User'
+import { UserInfo, UpdateProfileData, ChangePasswordData } from '../types/User'
 import axios from 'axios'
 
 export const getUserProfile = () => {
@@ -35,4 +35,8 @@ export const uploadAvatar = async (file: File): Promise<DataResponse<UserInfo>> 
    })
 
    return response.data
+}
+
+export const changePassword = (data: ChangePasswordData): Promise<DataResponse<null>> => {
+   return http.put<null, ChangePasswordData>(`${SERVER_URL}/api/auth/change-password`, data)
 }

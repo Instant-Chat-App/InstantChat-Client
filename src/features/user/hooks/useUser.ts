@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getCurrentUser } from '@/features/auth/services/AuthService'
-import { updateProfile, uploadAvatar } from '../services/UserService'
-import { UpdateProfileData } from '../types/User'
+import { changePassword, updateProfile, uploadAvatar } from '../services/UserService'
+import { ChangePasswordData, UpdateProfileData } from '../types/User'
 
 const useUser = () => {
    const queryClient = useQueryClient()
@@ -63,12 +63,30 @@ const useUser = () => {
       }
    })
 
+   const changePasswordMutation = useMutation({
+      mutationFn: (data: ChangePasswordData) => changePassword(data),
+      onSuccess: (response) => {
+         if (response.success) {
+            toast.success('Đổi mật khẩu thành công')
+         } else {
+            toast.error('Đổi mật khẩu thất bại', {
+               description: response.message
+            })
+         }
+      },
+      onError: (error: any) => {
+         toast.error('Đổi mật khẩu thất bại', {
+            description: error.response?.data?.message || 'Đã xảy ra lỗi khi đổi mật khẩu'
+         })
+      }
+   })
    return {
       userProfile,
       isLoading,
       error,
       updateProfileMutation,
-      uploadAvatarMutation
+      uploadAvatarMutation,
+      changePasswordMutation
    }
 }
 
