@@ -28,7 +28,6 @@ export const getCurrentUser = async (): Promise<DataResponse<UserProfile>> => {
       headers: {
          'Authorization': `Bearer ${(() => {
                const tokenStr = localStorage.getItem('auth_tokens');
-               console.log('Token:', tokenStr);
                try {
                   return tokenStr ? JSON.parse(tokenStr).accessToken ?? '' : '';
                } catch {

@@ -15,7 +15,7 @@ interface MessageGroup {
 }
 
 function MessageContainer({ chatId }: MessageContainerProps) {
-   const { messages, isLoading, error } = useMessage(chatId)
+   const { messages, isLoading, error, markMessagesAsRead } = useMessage(chatId)
    const scrollRef = useRef<HTMLDivElement>(null)
 
    // Scroll to bottom when messages change or on load
@@ -24,6 +24,24 @@ function MessageContainer({ chatId }: MessageContainerProps) {
          scrollRef.current.scrollIntoView({ behavior: 'smooth' })
       }
    }, [messages])
+
+   // Mark messages as read when user scrolls or views messages
+   useEffect(() => {
+      const handleScroll = () => {
+         markMessagesAsRead();
+      };
+
+      const scrollArea = scrollRef.current;
+      if (scrollArea) {
+         scrollArea.addEventListener('scroll', handleScroll);
+      }
+
+      return () => {
+         if (scrollArea) {
+            scrollArea.removeEventListener('scroll', handleScroll);
+         }
+      };
+   }, [markMessagesAsRead]);
 
    if (isLoading) {
       return (
@@ -111,6 +129,7 @@ function MessageContainer({ chatId }: MessageContainerProps) {
                                  message={message}
                                  isFirstInGroup={messageIndex === 0}
                                  isLastInGroup={messageIndex === group.messages.length - 1}
+                                 users={message.reactions?.map(r => r.user) || []}
                               />
                            ))}
                         </div>

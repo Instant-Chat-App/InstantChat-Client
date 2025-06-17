@@ -19,6 +19,10 @@ function MessageReactionBar({ children }: Props) {
                   <button
                      key={reaction.emoji}
                      className='rounded-md p-1 text-[20px] hover:cursor-pointer hover:bg-gray-200'
+                     onClick={() => {
+                        // Handle reaction click
+                        console.log(`Reacted with ${reaction.emoji}`)
+                     }}
                   >
                      {reaction.emoji}
                   </button>

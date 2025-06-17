@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { getUserChats } from "../services/ChatService"
 import { getSocket } from "@/socket/socket-io"
-import { Chat } from "../types/Chat"
+import { Attachment, Chat } from "../types/Chat"
+import { FileAttachment } from "../components/ChatInput"
 
 
 export const AUTH_STORAGE_KEY = 'auth_tokens'
@@ -19,7 +20,7 @@ function useChat() {
     } = useQuery<Chat[]>({
         queryKey: ['chats'],
         queryFn:  getUserChats,
-        staleTime: 1000 * 60, // giữ cache trong 1 phút
+        staleTime: 1000 * 60,
     })
 
     // Join all available chats on socket connection
@@ -32,12 +33,38 @@ function useChat() {
         socket.emit("joinMultipleChats", chatIds)
 
         return () => {
-            // Cleanup: leave all chats when unmounting
+            // Cleanup
             if (socket.connected) {
                 socket.emit("leaveAllChats")
             }
         }
     }, [chats])
+
+    // const memberJoined = useCallback((userId: number[]) => {
+    //     const socket = getSocket()
+    //     if (!socket) return;
+    //     socket.emit("memberJoined", { chats, userId })
+    // }, [chats])
+
+    // const memberLeft = useCallback((chatId: number, userId: number) => {
+    //     const socket = getSocket()
+    //     if (!socket) return;
+    //     socket.emit("memberLeft", { chatId, userId })
+    // }, [chats]);
+
+    
+
+    // const changeGroupName = useCallback((newName: string) => {
+    //     const socket = getSocket()
+    //     if (!socket) return;
+    //     socket.emit("changeGroupName", { chatId, newName })
+    // }, [chats])
+
+    // const changeGroupCover = useCallback((newCover: FileAttachment) => {
+    //     const socket = getSocket()
+    //     if (!socket) return;
+    //     socket.emit("changeGroupCover", { chatId, newCover })
+    // }, [chats])
 
     // Listen to all chat events regardless of current active chat
     useEffect(() => {
@@ -82,6 +109,7 @@ function useChat() {
         refetch,
         error,
         setError,
+        
     }
 }
 

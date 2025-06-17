@@ -7,6 +7,7 @@ import AttachmentList from './AttachmentList'
 import MessageActionPopover from './MessageActionPopover'
 import MessageListReaction from './MessageListReaction'
 import { format } from 'date-fns'
+import useMessage from '../hooks/useMessage'
 
 interface Props {
    message: ChatMessage
@@ -18,15 +19,9 @@ interface Props {
 function MessageBubble({ message, users, isFirstInGroup = true, isLastInGroup = true }: Props) {
    const { content, attachments, reactions, createdAt, isOwner, sender } = message
    const hasContent = content && content.trim().length > 0
-
-   // Debug log to check message ownership
-   console.log('Message:', {
-      content: content.substring(0, 20), // First 20 chars of content
-      senderId: sender.userId,
-      isOwner,
-      senderName: sender.fullName
-   })
-
+   const {editMessage, deleteMessage, reactMessage, deleteReaction} = useMessage(message.chatId)
+   console.log(reactions)
+   console.log
    return (
       <div 
          className={cn(
