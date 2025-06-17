@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input'
 import { PATH_URL } from '@/utils/Constant'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Lock, Phone } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm, ControllerRenderProps } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
@@ -84,7 +84,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ field, disabled }) => (
 
 function LoginForm() {
    const [showPassword, setShowPassword] = useState(false)
-   const { loginMutation, error, clearError } = useAuth()
+   const { loginMutation } = useAuth()
    const navigate = useNavigate()
 
    const isLoading = loginMutation.isPending
@@ -94,15 +94,7 @@ function LoginForm() {
       defaultValues: { phone: '', password: '' }
    })
 
-   // Reset form errors when component unmounts
-   useEffect(() => {
-      return () => {
-         clearError()
-      }
-   }, [clearError])
-
    const onSubmit = (data: LoginFormData): void => {
-      clearError() // Clear previous errors
       loginMutation.mutate(data)
    }
 
@@ -119,13 +111,6 @@ function LoginForm() {
          <CardContent>
             <Form {...form}>
                <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                  {/* Hiển thị lỗi từ API */}
-                  {error && (
-                     <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
-                        {error}
-                     </div>
-                  )}
-
                   {/* PHONE */}
                   <FormField
                      control={form.control}
