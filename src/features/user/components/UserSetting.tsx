@@ -1,5 +1,7 @@
+import ConfirmForm from '@/components/custom/ConfirmForm'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { BookUser, UserRound } from 'lucide-react'
+import useAuth from '@/features/auth/hooks/useAuth'
+import { BookUser, LogOut, UserRound } from 'lucide-react'
 import ContactList from './ContactList'
 import UpdateProfileForm from './UpdateProfileForm'
 
@@ -8,6 +10,8 @@ interface Props {
 }
 
 function UserSetting({ children }: Props) {
+   const { logout } = useAuth()
+
    return (
       <Popover>
          <PopoverTrigger>{children}</PopoverTrigger>
@@ -27,6 +31,18 @@ function UserSetting({ children }: Props) {
                   <div>Contacts</div>
                </button>
             </ContactList>
+
+            {/*  Logout  */}
+            <ConfirmForm
+               title={'Logout'}
+               description={'Do you want to logout ?'}
+               onConfirm={logout}
+            >
+               <button className='hover:bg-accent flex w-full items-center gap-2 rounded-md p-1'>
+                  <LogOut className='size-4' />
+                  <div>Logout</div>
+               </button>
+            </ConfirmForm>
          </PopoverContent>
       </Popover>
    )
