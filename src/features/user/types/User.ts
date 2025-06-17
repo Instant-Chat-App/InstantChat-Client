@@ -1,5 +1,5 @@
 interface UserInfo {
-   userId: number
+   id: number
    fullName: string
    phone: string
    email: string

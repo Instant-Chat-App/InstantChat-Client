@@ -27,12 +27,12 @@ function ConfirmForm({ children, title, description, onConfirm }: Props) {
                <AlertDialogDescription>{description}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-               <AlertDialogCancel>Huỷ</AlertDialogCancel>
+               <AlertDialogCancel>Cancel</AlertDialogCancel>
                <AlertDialogAction
                   className='bg-base hover:bg-base text-white'
                   onClick={onConfirm}
                >
-                  Đồng ý
+                  Accept
                </AlertDialogAction>
             </AlertDialogFooter>
          </AlertDialogContent>

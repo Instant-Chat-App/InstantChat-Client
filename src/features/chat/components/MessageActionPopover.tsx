@@ -2,7 +2,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Ellipsis, SmilePlus } from 'lucide-react'
 import { useState } from 'react'
 import { ChatMessage } from '../types/Chat'
-import MessagEditDelete from './MessagEditDelete'
+import MessagEditDelete from './MessageEditDelete'
 import MessageReactionBar from './MessageReactionBar'
 
 interface Props {

@@ -27,3 +27,15 @@ export const registerSchema = z
    })
 
 export type RegisterFormData = z.infer<typeof registerSchema>
+
+
+export interface UserProfile {
+  id: number;
+  phone: string;
+  fullName: string;
+  email: string;
+  avatar: string | null;
+  dob: Date; 
+  gender: 'MALE' | 'FEMALE';
+  bio: string;
+}

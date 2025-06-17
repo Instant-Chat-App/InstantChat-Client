@@ -1,96 +1,137 @@
 import { cn } from '@/lib/utils'
 import { caculateReaction } from '@/utils/CalculateReaction'
 import { REVERSE_REACTIONS_MAP } from '@/utils/Constant'
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import { ChatMessage } from '../types/Chat'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ChatMessage, User } from '../types/Chat'
 import AttachmentList from './AttachmentList'
 import MessageActionPopover from './MessageActionPopover'
 import MessageListReaction from './MessageListReaction'
+import { format } from 'date-fns'
 
 interface Props {
    message: ChatMessage
+   users?: User[]
+   isFirstInGroup?: boolean
+   isLastInGroup?: boolean
 }
 
-function MessageBubble({ message }: Props) {
-   const { messageId, content, attachments, reactions, isOwner, senderInfo, createdAt } =
-      message
+function MessageBubble({ message, users, isFirstInGroup = true, isLastInGroup = true }: Props) {
+   const { content, attachments, reactions, createdAt, isOwner, sender } = message
+   const hasContent = content && content.trim().length > 0
+
+   // Debug log to check message ownership
+   console.log('Message:', {
+      content: content.substring(0, 20), // First 20 chars of content
+      senderId: sender.userId,
+      isOwner,
+      senderName: sender.fullName
+   })
 
    return (
-      <div className={cn('flex w-full gap-1', isOwner ? 'justify-end' : 'justify-start')}>
-         {/*  Avatar  */}
-         {!isOwner && (
-            <div className='relative'>
-               <Avatar className='h-12 w-12'>
-                  <AvatarImage
-                     src='https://jbagy.me/wp-content/uploads/2025/03/hinh-anh-cute-avatar-vo-tri-3.jpg'
-                     className='h-[40px] w-[40px] rounded-full'
-                  />
-                  <AvatarFallback>{senderInfo.senderName.charAt(0)}</AvatarFallback>
+      <div 
+         className={cn(
+            'flex w-full gap-2', 
+            isOwner ? 'flex-row-reverse' : 'flex-row', // Use flex-row-reverse for owner's messages
+            !isLastInGroup && 'mb-1',
+            isLastInGroup && 'mb-4'
+         )}
+      >
+         {/* Avatar - Only show for other's messages and first in group */}
+         {!isOwner && isFirstInGroup && (
+            <div className='h-8 w-8 flex-shrink-0'>
+               <Avatar>
+                  <AvatarImage src={sender.avatar} />
+                  <AvatarFallback>{sender.fullName.charAt(0)}</AvatarFallback>
                </Avatar>
             </div>
          )}
 
+         {/* Placeholder for alignment when no avatar */}
+         {!isOwner && !isFirstInGroup && (
+            <div className='h-8 w-8 flex-shrink-0' />
+         )}
+
          <MessageActionPopover message={message}>
-            <div className='max-w-[45%]'>
-               <AttachmentList attachments={attachments} />
-               <div
-                  className={cn(
-                     'rounded-2xl px-4 py-2 break-words',
-                     isOwner
-                        ? 'rounded-br-md bg-[#766ac8] text-white'
-                        : 'bg-muted rounded-bl-md'
-                  )}
-               >
-                  {/*  Message Content  */}
-                  {isOwner ? (
-                     <p className='text-sm'>
-                        <div>{content}</div>
-                     </p>
-                  ) : (
-                     <div>
-                        <div className='font-semibold text-purple-700'>
-                           {senderInfo.senderName}
-                        </div>
-                        <p className='text-sm'>
-                           <div>{content}</div>
-                        </p>
-                     </div>
-                  )}
+            <div className={cn(
+               'flex flex-col',
+               isOwner ? 'items-end' : 'items-start',
+               'max-w-[45%]'
+            )}>
+               {/* Sender name - Only show for other's messages and first in group */}
+               {!isOwner && isFirstInGroup && (
+                  <div className='mb-1 text-sm font-medium text-gray-500'>
+                     {sender.fullName}
+                  </div>
+               )}
 
-                  {/*  Show reaction  */}
-                  {reactions && (
-                     <MessageListReaction reactions={reactions}>
-                        <button className='mt-2 w-fit hover:cursor-pointer'>
-                           {Array.from(caculateReaction(reactions).entries()).map(
-                              ([emoji, count]) => (
-                                 <button
-                                    key={emoji}
-                                    className='text-muted-foreground ml-1 inline-flex items-center gap-1 rounded-lg bg-gray-200 px-2 py-[0.5px] text-sm'
-                                 >
-                                    {REVERSE_REACTIONS_MAP.get(emoji)} {count}
-                                 </button>
-                              )
-                           )}
-                        </button>
-                     </MessageListReaction>
-                  )}
+               {/* Attachments */}
+               {attachments && attachments.length > 0 && (
+                  <AttachmentList attachments={attachments} />
+               )}
 
-                  {/*  Created At  */}
+               {/* Message content - Only show if not empty */}
+               {hasContent && (
                   <div
                      className={cn(
-                        'mt-1 flex justify-end text-xs',
-                        isOwner ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                        'px-4 py-2 break-words',
+                        // Dynamic border radius based on position in group
+                        isOwner ? (
+                           cn(
+                              'bg-[#766ac8] text-white',
+                              isFirstInGroup && 'rounded-t-2xl rounded-bl-2xl',
+                              isLastInGroup && 'rounded-b-2xl rounded-bl-2xl',
+                              !isFirstInGroup && !isLastInGroup && 'rounded-l-2xl',
+                              'rounded-br-md'
+                           )
+                        ) : (
+                           cn(
+                              'bg-gray-100 text-gray-900',
+                              isFirstInGroup && 'rounded-t-2xl rounded-br-2xl',
+                              isLastInGroup && 'rounded-b-2xl rounded-br-2xl',
+                              !isFirstInGroup && !isLastInGroup && 'rounded-r-2xl',
+                              'rounded-bl-md'
+                           )
+                        )
                      )}
                   >
-                     <div>
-                        {createdAt.toLocaleTimeString('vi-VN', {
-                           hour: '2-digit',
-                           minute: '2-digit',
-                           hour12: false
-                        })}
-                     </div>
+                     <p className='text-sm whitespace-pre-wrap'>{content}</p>
+
+                     {/* Reactions */}
+                     {reactions && reactions.length > 0 && (
+                        <MessageListReaction reactions={reactions} users={users}>
+                           <div className='mt-2 flex flex-wrap gap-1'>
+                              {Array.from(caculateReaction(reactions).entries()).map(
+                                 ([type, count]) => (
+                                    <span
+                                       key={type}
+                                       className={cn(
+                                          'inline-flex items-center gap-1 rounded-lg px-2 py-[2px] text-xs',
+                                          isOwner 
+                                             ? 'bg-white/10 text-white/90' 
+                                             : 'bg-gray-200 text-gray-700'
+                                       )}
+                                    >
+                                       {REVERSE_REACTIONS_MAP.get(type)} {count}
+                                    </span>
+                                 )
+                              )}
+                           </div>
+                        </MessageListReaction>
+                     )}
+
+                     {/* Time - Only show for last message in group */}
+                     {isLastInGroup && (
+                        <div
+                           className={cn(
+                              'mt-1 text-right text-xs',
+                              isOwner ? 'text-white/70' : 'text-gray-500'
+                           )}
+                        >
+                           {format(new Date(createdAt), 'HH:mm')}
+                        </div>
+                     )}
                   </div>
-               </div>
+               )}
             </div>
          </MessageActionPopover>
       </div>
