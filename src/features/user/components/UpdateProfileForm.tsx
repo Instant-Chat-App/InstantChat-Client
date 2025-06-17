@@ -26,9 +26,10 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Camera } from 'lucide-react'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import useUser from '../hooks/useUser'
 
 const updateProfileSchema = z.object({
    fullName: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
@@ -47,7 +48,7 @@ const updateProfileSchema = z.object({
 type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
 
 const users: UserInfo = {
-   userId: 1,
+   id: 1,
    fullName: 'Johnathan Doe',
    phone: '12345678910',
    email: 'johnathan.doe@example.com',
@@ -62,17 +63,23 @@ interface Props {
 }
 
 function UpdateProfileForm({ children }: Props) {
+   const { userProfile } = useUser()
+
+   useEffect(() => {
+      console.log('userProfile', userProfile?.avatar)
+   })
+
    const fileInputRef = useRef<HTMLInputElement>(null)
    const form = useForm<UpdateProfileFormData>({
       resolver: zodResolver(updateProfileSchema),
       defaultValues: {
-         fullName: users.fullName,
-         phone: users.phone,
-         email: users.email,
-         dob: users.dob,
-         gender: users.gender,
-         avatar: users.avatar,
-         bio: users.bio
+         fullName: userProfile?.fullName || '',
+         phone: userProfile?.phone || '',
+         email: userProfile?.email || '',
+         dob: userProfile?.dob || new Date(),
+         gender: userProfile?.gender,
+         bio: userProfile?.bio || '',
+         avatar: userProfile?.avatar || ''
       }
    })
 
