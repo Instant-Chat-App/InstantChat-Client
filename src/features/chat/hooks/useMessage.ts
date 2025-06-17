@@ -54,7 +54,15 @@ function useMessage(chatId: number | null) {
         return processedMessage
     }) || []
 
-    // Listen to real-time socket events
+    // Socket event to mark messages as read
+    const markMessagesAsRead = useCallback(() => {
+        const socket = getSocket();
+        if (!socket || !chatId) return;
+
+        socket.emit("readMessages", chatId);
+    }, [chatId]);
+
+    // Socket event to send a new message
     const sendMessage = useCallback(
         (content: string, attachments?: FileAttachment[], replyTo?: number) => {
             const socket = getSocket();
@@ -70,30 +78,92 @@ function useMessage(chatId: number | null) {
         [chatId]
     );
 
+    const deleteMessage = useCallback(
+        (messageId: number) => {
+            const socket = getSocket();
+            if (!socket || !chatId) return;
+            socket.emit("deleteMessage", { chatId, messageId });
+        },
+        [chatId]
+    );
+
+    const editMessage = useCallback(
+        (messageId: number, content: string) => {
+            const socket = getSocket();
+            if (!socket || !chatId) return;
+            socket.emit("editMessage", { chatId, messageId, content });
+        },
+        [chatId]
+    );
+
+    const reactMessage = useCallback(
+        (messageId: number, emoji: string) => {
+            const socket = getSocket();
+            if (!socket || !chatId) return;
+            socket.emit("reactMessage", { chatId, messageId, emoji });
+        },
+        [chatId]
+    );
+
+    const deleteReaction = useCallback(
+        (messageId: number, emoji: string) => {
+            const socket = getSocket();
+            if (!socket || !chatId) return;
+            socket.emit("deleteReaction", { chatId, messageId });
+        },
+        [chatId]
+    );
+
+    
+
+
     useEffect(() => {
         const socket = getSocket();
         if (!socket || !chatId) return;
 
-        const handleNew = (payload: { chatId: number }) => {
+        const handleNewMessage = (payload: { chatId: number }) => {
             if (payload.chatId === chatId) {
                 queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
             }
         };
 
-        socket.on("newMessage", handleNew);
-        socket.on("messageEdited", handleNew);
-        socket.on("messageDeleted", handleNew);
-        socket.on("messageReacted", handleNew);
-        socket.on("reactionDeleted", handleNew);
+        // Message events
+        socket.on("newMessage", handleNewMessage);
+        socket.on("editMessage", handleNewMessage);
+        socket.on("deleteMessage", handleNewMessage);
+        socket.on("reactMessage", handleNewMessage);
+        socket.on("deleteReaction", handleNewMessage);
+
+        // Read status events
+        socket.on("readSuccess", (payload: { chatId: number }) => {
+            if (payload.chatId === chatId) {
+                queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+                queryClient.invalidateQueries({ queryKey: ['chats'] }); // Update chat list to reflect read status
+            }
+        });
+
+        socket.on("readError", (payload: { error: string }) => {
+            console.error("Error marking messages as read:", payload.error);
+            setError(payload.error);
+        });
 
         return () => {
-            socket.off("newMessage", handleNew);
-            socket.off("messageEdited", handleNew);
-            socket.off("messageDeleted", handleNew);
-            socket.off("messageReacted", handleNew);
-            socket.off("reactionDeleted", handleNew);
+            socket.off("newMessage", handleNewMessage);
+            socket.off("messageEdited", handleNewMessage);
+            socket.off("messageDeleted", handleNewMessage);
+            socket.off("messageReacted", handleNewMessage);
+            socket.off("reactionDeleted", handleNewMessage);
+            socket.off("readSuccess");
+            socket.off("readError");
         };
     }, [chatId, queryClient]);
+
+    // Auto mark messages as read when chat is opened
+    useEffect(() => {
+        if (chatId) {
+            markMessagesAsRead();
+        }
+    }, [chatId, markMessagesAsRead]);
 
     return {
         messages: processedMessages,
@@ -103,7 +173,12 @@ function useMessage(chatId: number | null) {
         setError,
         refetch,
         sendMessage,
-        currentUser
+        currentUser,
+        markMessagesAsRead,
+        deleteMessage,
+        editMessage,
+        reactMessage,
+        deleteReaction
     }
 }
 

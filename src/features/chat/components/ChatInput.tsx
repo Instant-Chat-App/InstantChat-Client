@@ -5,7 +5,7 @@ import { useRef, useState } from 'react'
 import EmojiPicker from './EmojiPicker'
 import useMessage from '../hooks/useMessage'
 
-interface FileAttachment {
+export interface FileAttachment {
    fileName: string;
    mimeType: string;
    base64Data: string;

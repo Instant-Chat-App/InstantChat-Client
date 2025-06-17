@@ -28,6 +28,7 @@ export interface Attachment {
 }
 
 export interface Reaction {
+   user: any;
    messageId: number;
    userId: number;
    type: 'LIKE' | 'LOVE' | 'LAUGH' | 'SAD' | 'ANGRY' | 'WOW';
