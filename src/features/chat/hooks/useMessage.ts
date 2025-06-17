@@ -3,7 +3,7 @@ import { useCallback, useState } from "react"
 import { getChatMessages } from "../services/ChatService"
 import { getSocket } from "@/socket/socket-io"
 import { useEffect } from "react"
-import { ChatMessage } from "../types/Chat"
+import { ChatMessage, Reaction } from "../types/Chat"
 import { getCurrentUser } from "@/features/auth/services/AuthService"
 
 interface FileAttachment {
@@ -96,49 +96,82 @@ function useMessage(chatId: number | null) {
         [chatId]
     );
 
+    // Updated to match server's expected parameters and types
     const reactMessage = useCallback(
-        (messageId: number, emoji: string) => {
+        (messageId: number, reaction: Reaction['type']) => {
             const socket = getSocket();
-            if (!socket || !chatId) return;
-            socket.emit("reactMessage", { chatId, messageId, emoji });
+            if (!socket || !chatId || !currentUser) {
+                console.error("Missing required data for reaction:", { socket, chatId, currentUser });
+                return;
+            }
+
+            try {
+                // Send reaction with the expected parameters
+                socket.emit("reactMessage", chatId, messageId, reaction);
+            } catch (err) {
+                console.error("Error sending reaction:", err);
+                setError("Failed to send reaction. Please try again.");
+            }
         },
-        [chatId]
+        [chatId, currentUser]
     );
 
     const deleteReaction = useCallback(
-        (messageId: number, emoji: string) => {
+        (messageId: number, reaction: Reaction['type']) => {
             const socket = getSocket();
-            if (!socket || !chatId) return;
-            socket.emit("deleteReaction", { chatId, messageId });
+            if (!socket || !chatId || !currentUser) {
+                console.error("Missing required data for deleting reaction:", { socket, chatId, currentUser });
+                return;
+            }
+
+            try {
+                socket.emit("deleteReaction", messageId, currentUser.id, reaction);
+            } catch (err) {
+                console.error("Error deleting reaction:", err);
+                setError("Failed to delete reaction. Please try again.");
+            }
         },
-        [chatId]
+        [chatId, currentUser]
     );
-
-    
-
 
     useEffect(() => {
         const socket = getSocket();
         if (!socket || !chatId) return;
 
-        const handleNewMessage = (payload: { chatId: number }) => {
+        const handleMessageEvent = (payload: { chatId: number }) => {
             if (payload.chatId === chatId) {
                 queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
             }
         };
 
         // Message events
-        socket.on("newMessage", handleNewMessage);
-        socket.on("editMessage", handleNewMessage);
-        socket.on("deleteMessage", handleNewMessage);
-        socket.on("reactMessage", handleNewMessage);
-        socket.on("deleteReaction", handleNewMessage);
+        socket.on("newMessage", handleMessageEvent);
+        socket.on("editMessage", handleMessageEvent);
+        socket.on("deleteMessage", handleMessageEvent);
+
+        // Reaction events with specific handlers
+        socket.on("messageReacted", (payload: { messageId: number, userId: number, reaction: Reaction['type'] }) => {
+            console.log("Reaction received:", payload);
+            queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+        });
+
+        socket.on("reactionDeleted", (payload: { messageId: number, userId: number, reaction: Reaction['type'] }) => {
+            console.log("Reaction deleted:", payload);
+            queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+        });
+
+        // Success handlers for reactions
+        socket.on("reactSuccess", (payload: { messageId: number, reaction: Reaction['type'] }) => {
+            console.log("Reaction success:", payload);
+            queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+            setError(null); // Clear any previous errors
+        });
 
         // Read status events
         socket.on("readSuccess", (payload: { chatId: number }) => {
             if (payload.chatId === chatId) {
                 queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-                queryClient.invalidateQueries({ queryKey: ['chats'] }); // Update chat list to reflect read status
+                queryClient.invalidateQueries({ queryKey: ['chats'] });
             }
         });
 
@@ -147,14 +180,22 @@ function useMessage(chatId: number | null) {
             setError(payload.error);
         });
 
+        // Error handlers for reactions
+        socket.on("reactError", (payload: { error: string }) => {
+            console.error("Reaction error:", payload.error);
+            setError(payload.error);
+        });
+
         return () => {
-            socket.off("newMessage", handleNewMessage);
-            socket.off("messageEdited", handleNewMessage);
-            socket.off("messageDeleted", handleNewMessage);
-            socket.off("messageReacted", handleNewMessage);
-            socket.off("reactionDeleted", handleNewMessage);
+            socket.off("newMessage", handleMessageEvent);
+            socket.off("editMessage", handleMessageEvent);
+            socket.off("deleteMessage", handleMessageEvent);
+            socket.off("messageReacted");
+            socket.off("reactionDeleted");
+            socket.off("reactSuccess");
             socket.off("readSuccess");
             socket.off("readError");
+            socket.off("reactError");
         };
     }, [chatId, queryClient]);
 

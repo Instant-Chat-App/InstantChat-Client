@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { caculateReaction } from '@/utils/CalculateReaction'
-import { REVERSE_REACTIONS_MAP } from '@/utils/Constant'
+import { REACTIONS } from '@/utils/Constant'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ChatMessage, User } from '../types/Chat'
 import AttachmentList from './AttachmentList'
@@ -17,11 +17,9 @@ interface Props {
 }
 
 function MessageBubble({ message, users, isFirstInGroup = true, isLastInGroup = true }: Props) {
-   const { content, attachments, reactions, createdAt, isOwner, sender } = message
+   const { content, attachments, reactions, createdAt, isOwner, sender, messageId } = message
    const hasContent = content && content.trim().length > 0
-   const {editMessage, deleteMessage, reactMessage, deleteReaction} = useMessage(message.chatId)
-   console.log(reactions)
-   console.log
+
    return (
       <div 
          className={cn(
@@ -93,23 +91,30 @@ function MessageBubble({ message, users, isFirstInGroup = true, isLastInGroup = 
 
                      {/* Reactions */}
                      {reactions && reactions.length > 0 && (
-                        <MessageListReaction reactions={reactions} users={users}>
-                           <div className='mt-2 flex flex-wrap gap-1'>
-                              {Array.from(caculateReaction(reactions).entries()).map(
-                                 ([type, count]) => (
-                                    <span
-                                       key={type}
-                                       className={cn(
-                                          'inline-flex items-center gap-1 rounded-lg px-2 py-[2px] text-xs',
-                                          isOwner 
-                                             ? 'bg-white/10 text-white/90' 
-                                             : 'bg-gray-200 text-gray-700'
-                                       )}
-                                    >
-                                       {REVERSE_REACTIONS_MAP.get(type)} {count}
-                                    </span>
-                                 )
-                              )}
+                        <MessageListReaction
+                           reactions={reactions}
+                           users={users}
+                           messageId={messageId}
+                           chatId={message.chatId}
+                        >
+                           <div className='mt-1'>
+                              <div className='flex gap-1'>
+                                 {Object.entries(caculateReaction(reactions)).map(
+                                    ([type, count]) => {
+                                       const reactionConfig = REACTIONS.find(r => r.type === type)
+                                       if (!reactionConfig) return null
+                                       return (
+                                          <div
+                                             key={type}
+                                             className='flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs'
+                                          >
+                                             <span>{reactionConfig.emoji}</span>
+                                             <span>{count}</span>
+                                          </div>
+                                       )
+                                    }
+                                 )}
+                              </div>
                            </div>
                         </MessageListReaction>
                      )}

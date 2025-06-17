@@ -10,13 +10,13 @@ export const PATH_URL = {
 }
 
 export const REACTIONS = [
-   { emoji: '👍', value: 'LIKE' },
-   { emoji: '❤️', value: 'LOVE' },
-   { emoji: '😂', value: 'LAUGH' },
-   { emoji: '😢', value: 'SAD' },
-   { emoji: '😡', value: 'ANGRY' },
-   { emoji: '😮', value: 'WOW' }
-]
+   { emoji: '👍', type: 'LIKE' },
+   { emoji: '❤️', type: 'LOVE' },
+   { emoji: '😂', type: 'LAUGH' },
+   { emoji: '😢', type: 'SAD' },
+   { emoji: '😡', type: 'ANGRY' },
+   { emoji: '😮', type: 'WOW' }
+] as const
 
 export const REVERSE_REACTIONS = [
    { emoji: 'LIKE', value: '👍' },
@@ -27,6 +27,12 @@ export const REVERSE_REACTIONS = [
    { emoji: 'WOW', value: '😮' }
 ]
 
-export const REVERSE_REACTIONS_MAP = new Map(
-   REVERSE_REACTIONS.map((item) => [item.emoji, item.value])
-)
+export const REVERSE_REACTIONS_MAP = {
+    'LIKE': '👍',
+    'LOVE': '❤️',
+    'LAUGH': '😄',
+    'SAD': '😢',
+    'ANGRY': '😠',
+    'WOW': '😮'
+} as const;
+

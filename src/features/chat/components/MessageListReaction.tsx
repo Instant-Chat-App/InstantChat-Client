@@ -13,14 +13,34 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { REVERSE_REACTIONS_MAP } from '@/utils/Constant'
 import { Reaction, User } from '../types/Chat'
 import { format } from 'date-fns'
+import useMessage from '../hooks/useMessage'
+import { useParams } from 'react-router-dom'
 
 interface Props {
    children: React.ReactNode
    reactions: Reaction[]
    users?: User[]
+   messageId: number
+   chatId?: number
 }
 
-function MessageListReaction({ reactions, users, children }: Props) {
+function MessageListReaction({ reactions, users, children, messageId, chatId }: Props) {
+   const { reactMessage, deleteReaction } = useMessage(chatId ? chatId : null);
+
+   const handleReactionClick = (emoji: string) => {
+      // Check if user has already reacted with this emoji
+      const hasReacted = reactions.some(reaction =>
+         reaction.type === emoji &&
+         reaction.userId === parseInt(localStorage.getItem('userId') || '0')
+      );
+
+      if (hasReacted) {
+         deleteReaction(messageId, emoji as "LIKE" | "LOVE" | "LAUGH" | "SAD" | "ANGRY" | "WOW");
+      } else {
+         reactMessage(messageId, emoji as "LIKE" | "LOVE" | "LAUGH" | "SAD" | "ANGRY" | "WOW");
+      }
+   };
+
    return (
       <AlertDialog>
          <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
@@ -35,6 +55,7 @@ function MessageListReaction({ reactions, users, children }: Props) {
                            <div
                               className='mb-2 flex items-center justify-between'
                               key={`${reaction.messageId}-${reaction.userId}`}
+                              onClick={() => handleReactionClick(reaction.type)}
                            >
                               <div className='flex items-center gap-2'>
                                  {/* Avatar */}
@@ -55,8 +76,10 @@ function MessageListReaction({ reactions, users, children }: Props) {
                                     </div>
                                  </div>
                               </div>
-                              <div className='text-[20px]'>
-                                 {REVERSE_REACTIONS_MAP.get(reaction.type)}
+
+                              {/* Emoji */}
+                              <div className='text-xl'>
+                                 {REVERSE_REACTIONS_MAP[reaction.type as keyof typeof REVERSE_REACTIONS_MAP]}
                               </div>
                            </div>
                         )
@@ -65,9 +88,7 @@ function MessageListReaction({ reactions, users, children }: Props) {
                </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-               <AlertDialogCancel className='border-none bg-red-500 text-white hover:bg-red-500 hover:text-white'>
-                  Close
-               </AlertDialogCancel>
+               <AlertDialogCancel>Close</AlertDialogCancel>
             </AlertDialogFooter>
          </AlertDialogContent>
       </AlertDialog>

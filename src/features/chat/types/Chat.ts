@@ -67,3 +67,12 @@ export interface ChatMessage {
    messageStatus: MessageStatus[];
    isOwner: boolean;
 }
+
+export interface REACT_TYPE {
+   LIKE: 'LIKE',
+   LOVE: 'LOVE',
+   LAUGH: 'LAUGH',
+   SAD: 'SAD',
+   ANGRY: 'ANGRY',
+   WOW: 'WOW'
+}

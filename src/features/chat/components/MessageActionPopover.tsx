@@ -42,7 +42,7 @@ function MessageActionPopover({ children, message }: Props) {
                )}
 
                {/*  Show Reaction Bar  */}
-               <MessageReactionBar>
+               <MessageReactionBar messageId={message.messageId} chatId={message.chatId}>
                   <button className='rounded-full bg-gray-200 p-1'>
                      <SmilePlus className='size-4' />
                   </button>
