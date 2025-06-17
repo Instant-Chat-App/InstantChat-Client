@@ -18,26 +18,94 @@ import { Input } from '@/components/ui/input'
 import { PATH_URL } from '@/utils/Constant'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Lock, Phone } from 'lucide-react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useState } from 'react'
+import { useForm, ControllerRenderProps } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
 import { LoginFormData, loginSchema } from '../types/AuthType'
 
+// Định nghĩa kiểu cho props của component con
+interface PasswordInputProps {
+   field: ControllerRenderProps<LoginFormData, 'password'>
+   showPassword: boolean
+   setShowPassword: React.Dispatch<React.SetStateAction<boolean>>
+   disabled: boolean
+}
+
+interface PhoneInputProps {
+   field: ControllerRenderProps<LoginFormData, 'phone'>
+   disabled: boolean
+}
+
+// Tách thành component con để tái sử dụng
+const PasswordInput: React.FC<PasswordInputProps> = ({
+   field,
+   showPassword,
+   setShowPassword,
+   disabled
+}) => (
+   <div className='relative'>
+      <Lock className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+      <Input
+         {...field}
+         placeholder='Nhập mật khẩu'
+         className='pr-10 pl-10'
+         type={showPassword ? 'text' : 'password'}
+         disabled={disabled}
+         autoComplete='current-password'
+      />
+      <Button
+         type='button'
+         variant='ghost'
+         size='icon'
+         className='absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 transform'
+         onClick={() => setShowPassword((prev) => !prev)}
+         tabIndex={-1}
+         disabled={disabled}
+      >
+         {showPassword ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
+      </Button>
+   </div>
+)
+
+const PhoneInput: React.FC<PhoneInputProps> = ({ field, disabled }) => (
+   <div className='relative'>
+      <Phone className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+      <Input
+         {...field}
+         placeholder='Nhập số điện thoại'
+         className='pl-10'
+         type='tel'
+         disabled={disabled}
+         autoComplete='username'
+      />
+   </div>
+)
+
 function LoginForm() {
    const [showPassword, setShowPassword] = useState(false)
-   const { loginMutation } = useAuth()
+   const { loginMutation, error, clearError } = useAuth()
    const navigate = useNavigate()
+
+   const isLoading = loginMutation.isPending
 
    const form = useForm<LoginFormData>({
       resolver: zodResolver(loginSchema),
       defaultValues: { phone: '', password: '' }
    })
 
+   // Reset form errors when component unmounts
+   useEffect(() => {
+      return () => {
+         clearError()
+      }
+   }, [clearError])
+
    const onSubmit = (data: LoginFormData): void => {
-      console.log(data)
+      clearError() // Clear previous errors
       loginMutation.mutate(data)
    }
+
    const handleSwitchToRegister = (): void => navigate(PATH_URL.REGISTER)
 
    return (
@@ -51,6 +119,13 @@ function LoginForm() {
          <CardContent>
             <Form {...form}>
                <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+                  {/* Hiển thị lỗi từ API */}
+                  {error && (
+                     <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+                        {error}
+                     </div>
+                  )}
+
                   {/* PHONE */}
                   <FormField
                      control={form.control}
@@ -59,17 +134,7 @@ function LoginForm() {
                         <FormItem>
                            <FormLabel>Số điện thoại</FormLabel>
                            <FormControl>
-                              <div className='relative'>
-                                 <Phone className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                                 <Input
-                                    {...field}
-                                    placeholder='Nhập số điện thoại'
-                                    className='pl-10'
-                                    type='tel'
-                                    disabled={loginMutation.isPending}
-                                    autoComplete='username'
-                                 />
-                              </div>
+                              <PhoneInput field={field} disabled={isLoading} />
                            </FormControl>
                            <FormMessage />
                         </FormItem>
@@ -84,32 +149,12 @@ function LoginForm() {
                         <FormItem>
                            <FormLabel>Mật khẩu</FormLabel>
                            <FormControl>
-                              <div className='relative'>
-                                 <Lock className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                                 <Input
-                                    {...field}
-                                    placeholder='Nhập mật khẩu'
-                                    className='pr-10 pl-10'
-                                    type={showPassword ? 'text' : 'password'}
-                                    disabled={loginMutation.isPending}
-                                    autoComplete='current-password'
-                                 />
-                                 <Button
-                                    type='button'
-                                    variant='ghost'
-                                    size='icon'
-                                    className='absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 transform'
-                                    onClick={() => setShowPassword((prev) => !prev)}
-                                    tabIndex={-1}
-                                    disabled={loginMutation.isPending}
-                                 >
-                                    {showPassword ? (
-                                       <EyeOff className='h-4 w-4' />
-                                    ) : (
-                                       <Eye className='h-4 w-4' />
-                                    )}
-                                 </Button>
-                              </div>
+                              <PasswordInput
+                                 field={field}
+                                 showPassword={showPassword}
+                                 setShowPassword={setShowPassword}
+                                 disabled={isLoading}
+                              />
                            </FormControl>
                            <FormMessage />
                         </FormItem>
@@ -121,9 +166,9 @@ function LoginForm() {
                      variant='primary'
                      type='submit'
                      className='w-full'
-                     disabled={loginMutation.isPending}
+                     disabled={isLoading}
                   >
-                     {loginMutation.isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                     {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                   </Button>
 
                   {/* LINK ĐĂNG KÝ */}
@@ -131,11 +176,11 @@ function LoginForm() {
                      <Button
                         variant='link'
                         onClick={handleSwitchToRegister}
-                        disabled={loginMutation.isPending}
+                        disabled={isLoading}
                         className='text-sm'
                         type='button'
                      >
-                        {'Chưa có tài khoản? Đăng ký'}
+                        Chưa có tài khoản? Đăng ký
                      </Button>
                   </div>
                </form>

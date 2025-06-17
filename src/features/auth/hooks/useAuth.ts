@@ -1,13 +1,82 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { login, register } from '../services/AuthService'
+import { useNavigate } from 'react-router-dom'
+import { LoginFormData, RegisterFormData } from '../types/AuthType'
+import { PATH_URL } from '@/utils/Constant'
+import { AuthResponse } from '../types/AuthResponse'
+import { useState } from 'react'
+
+// Key để lưu token trong localStorage
+export const AUTH_STORAGE_KEY = 'auth_tokens'
 
 function useAuth() {
-   const loginMutation = useMutation({ mutationFn: login })
-   const registerMutation = useMutation({ mutationFn: register })
+   const [error, setError] = useState<string | null>(null)
+   const navigate = useNavigate()
+   const queryClient = useQueryClient()
+
+   const loginMutation = useMutation({
+      mutationFn: (data: LoginFormData) => login(data),
+      onSuccess: (response) => {
+         if (response.success && response.data) {
+            // Lưu tokens vào localStorage
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response.data))
+
+            // Cập nhật cache hoặc state global nếu cần
+            queryClient.invalidateQueries({ queryKey: ['user'] })
+
+            // Điều hướng đến trang chính sau khi đăng nhập thành công
+            navigate(PATH_URL.CHAT_PAGE)
+         } else {
+            // Xử lý trường hợp API trả về success = false
+            setError(response.message || 'Đăng nhập thất bại')
+         }
+      },
+      onError: (error: any) => {
+         setError(error?.message || 'Lỗi kết nối server')
+      }
+   })
+
+   const registerMutation = useMutation({
+      mutationFn: (data: RegisterFormData) => register(data),
+      onSuccess: (response) => {
+         if (response.success) {
+            navigate(PATH_URL.LOGIN)
+         } else {
+            setError(response.message || 'Đăng ký thất bại')
+         }
+      },
+      onError: (error: any) => {
+         setError(error?.message || 'Lỗi kết nối server')
+      }
+   })
+
+   // Hàm logout
+   const logout = () => {
+      localStorage.removeItem(AUTH_STORAGE_KEY)
+      queryClient.clear()
+      navigate(PATH_URL.LOGIN)
+   }
+
+   // Hàm kiểm tra user đã đăng nhập chưa
+   const isAuthenticated = (): boolean => {
+      return localStorage.getItem(AUTH_STORAGE_KEY) !== null
+   }
+
+   // Hàm lấy thông tin token
+   const getTokens = (): AuthResponse | null => {
+      const tokensString = localStorage.getItem(AUTH_STORAGE_KEY)
+      if (!tokensString) return null
+      return JSON.parse(tokensString) as AuthResponse
+   }
 
    return {
       loginMutation,
-      registerMutation
+      registerMutation,
+      logout,
+      isAuthenticated,
+      getTokens,
+      error,
+      clearError: () => setError(null)
    }
 }
 

@@ -4,6 +4,6 @@ export interface DataResponse<T> {
    success: boolean
    code: HttpStatusCode
    message: string
-   data: T
+   data?: T
    errors: string
 }
