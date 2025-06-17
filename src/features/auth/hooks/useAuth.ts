@@ -5,6 +5,7 @@ import { LoginFormData, RegisterFormData } from '../types/AuthType'
 import { PATH_URL } from '@/utils/Constant'
 import { AuthResponse } from '../types/AuthResponse'
 import { useState } from 'react'
+import { disconnectSocket, initializeSocket } from '@/socket/socket-io'
 
 // Key để lưu token trong localStorage
 export const AUTH_STORAGE_KEY = 'auth_tokens'
@@ -20,6 +21,14 @@ function useAuth() {
          if (response.success && response.data) {
             // Lưu tokens vào localStorage
             localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(response.data))
+
+            // Init socket sau khi login
+            const socket = initializeSocket()
+            if (!socket) {
+               console.error("Failed to initialize socket connection")
+               setError("Failed to establish real-time connection")
+               return
+            }
 
             // Cập nhật cache hoặc state global nếu cần
             queryClient.invalidateQueries({ queryKey: ['user'] })
@@ -52,6 +61,8 @@ function useAuth() {
 
    // Hàm logout
    const logout = () => {
+      // Disconnect socket before clearing auth data
+      disconnectSocket()
       localStorage.removeItem(AUTH_STORAGE_KEY)
       queryClient.clear()
       navigate(PATH_URL.LOGIN)

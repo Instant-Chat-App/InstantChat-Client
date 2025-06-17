@@ -3,13 +3,14 @@ import { Input } from '@/components/ui/input'
 import { Paperclip, Send, Smile } from 'lucide-react'
 import { useRef, useState } from 'react'
 import EmojiPicker from './EmojiPicker'
-import { sendMessage } from '@/socket/message.socket'
+import useMessage from '../hooks/useMessage'
 
-function ChatInput() {
+function ChatInput({chatId}: { chatId: number | null }) {
    const [message, setMessage] = useState<string>('')
    const [attachments, setAttachments] = useState<File[]>([])
    const fileInputRef = useRef<HTMLInputElement>(null)
 
+   const messageUtils = useMessage(chatId);
    const handleEmojiSelect = (emoji: string) => setMessage((prev) => prev + emoji)
 
    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -42,7 +43,7 @@ function ChatInput() {
       console.log('Sending message:', message, 'with attachments:', attachments)
 
       try {
-         await sendMessage(1, message, attachments)
+         await messageUtils.sendMessage(message, attachments)
          setMessage('')
          setAttachments([])
       } catch (error) {

@@ -2,44 +2,27 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import CommunityDetail from '@/features/community/components/CommunityDetail'
-import { CommunityDetailType } from '@/features/community/types/Community'
 import { MoreVertical, Phone, Video } from 'lucide-react'
-import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ChatInput from './ChatInput'
 import MessageContainer from './MessageContainer'
-
-const detail: CommunityDetailType = {
-   chatId: 1,
-   chatName: 'Frontend Developers',
-   coverImage: 'https://randomuser.me/api/portraits/lego/2.jpg',
-   description: 'A place for frontend enthusiasts to share tips, tricks, and resources.',
-   type: 'GROUP',
-   members: [
-      {
-         memberId: 1,
-         memberName: 'Alice Smith',
-         memberAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-         isOwner: true
-      },
-      {
-         memberId: 2,
-         memberName: 'Bob Johnson',
-         memberAvatar: 'https://randomuser.me/api/portraits/men/45.jpg',
-         isOwner: false
-      }
-   ]
-}
+import useChat from '../hooks/useChat'
+import { cn } from '@/lib/utils'
 
 function ChatBox() {
    const [searchParams] = useSearchParams()
    const chatId = searchParams.get('id')
 
-   // const selectedChatName = chatNames.get(chatId) || 'Unknown User';
+   const { chats, isLoading } = useChat()
+   const currentChat = chats?.find(chat => chat.chatId === Number(chatId))
 
-   useEffect(() => {
-      console.log(`ChatBox mounted with chatId: ${chatId}`)
-   }, [chatId])
+   if (isLoading) {
+      return (
+         <div className="flex h-screen items-center justify-center">
+            <p>Loading chat...</p>
+         </div>
+      )
+   }
 
    return (
       <div className='flex h-screen flex-1 flex-col'>
@@ -48,43 +31,62 @@ function ChatBox() {
             <div className='flex items-center gap-3'>
                <div className='relative'>
                   <Avatar className='h-10 w-10'>
-                     <AvatarImage src='https://jbagy.me/wp-content/uploads/2025/03/hinh-anh-cute-avatar-vo-tri-3.jpg' />
-                     <AvatarFallback></AvatarFallback>
+                     <AvatarImage src={currentChat?.displayAvatar} />
+                     <AvatarFallback>{currentChat?.displayName?.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <div className='border-background absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 bg-green-500' />
                </div>
                <div>
-                  <h2 className='font-semibold'>Hello</h2>
-                  <p className='text-muted-foreground text-sm'>
+                  <h2 className='font-semibold'>{currentChat?.displayName || 'Select a chat'}</h2>
+                  <div className='flex items-center gap-2'>
                      <Badge variant='secondary' className='text-xs'>
-                        Group
+                        {currentChat?.chatType?.toLowerCase() || 'No type'}
                      </Badge>
-                  </p>
+                     {currentChat?.chatDescription && (
+                        <p className='text-muted-foreground text-sm truncate max-w-[300px]'>
+                           {currentChat.chatDescription}
+                        </p>
+                     )}
+                  </div>
                </div>
             </div>
 
-            <div className='mr-2 flex items-center gap-2'>
-               <Button variant='ghost' size='icon'>
-                  <Phone className='h-5 w-5' />
-               </Button>
-               <Button variant='ghost' size='icon'>
-                  <Video className='h-5 w-5' />
-               </Button>
-               <CommunityDetail detail={detail}>
+            {currentChat && (
+               <div className='mr-2 flex items-center gap-2'>
                   <Button variant='ghost' size='icon'>
-                     <MoreVertical className='h-5 w-5' />
+                     <Phone className='h-5 w-5' />
                   </Button>
-               </CommunityDetail>
-            </div>
+                  <Button variant='ghost' size='icon'>
+                     <Video className='h-5 w-5' />
+                  </Button>
+                  <CommunityDetail detail={{
+                     chatId: currentChat.chatId,
+                     chatName: currentChat.displayName,
+                     coverImage: currentChat.displayAvatar,
+                     description: currentChat.chatDescription || '',
+                     type: currentChat.chatType,
+                     members: [] // You'll need to fetch members separately
+                  }}>
+                     <Button variant='ghost' size='icon'>
+                        <MoreVertical className='h-5 w-5' />
+                     </Button>
+                  </CommunityDetail>
+               </div>
+            )}
          </div>
 
          {/* Messages */}
-         <MessageContainer />
+         <div className={cn('flex-1 overflow-hidden', {
+            'bg-muted/50': !currentChat
+         })}>
+            <MessageContainer chatId={chatId ? Number(chatId) : null} />
+         </div>
 
          {/* Chat Input */}
-         <div className='border-border bg-background border-t'>
-            <ChatInput />
-         </div>
+         {currentChat && (
+            <div className='border-border bg-background border-t'>
+               <ChatInput chatId={currentChat.chatId} />
+            </div>
+         )}
       </div>
    )
 }

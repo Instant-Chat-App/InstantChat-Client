@@ -1,8 +1,16 @@
 export interface Chat {
-   chatId: number
-   name: string
-   avatar?: string
-   type: 'group' | 'private' | 'channel'
+   chatId: number;
+   chatType: 'PRIVATE' | 'GROUP' | 'CHANNEL';
+   chatDescription: string | null;
+   displayName: string;
+   displayAvatar: string;
+   messageId: number | null;
+   senderName: string | null;
+   messageContent: string | null;
+   messageCreatedAt: string | null;
+   messageSenderId: number | null;
+   isOwner: boolean;
+   readStatus: 'READ' | 'UNREAD' | null;
 }
 
 export interface MessageReaction {
@@ -15,20 +23,46 @@ export interface MessageReaction {
 
 export interface Attachment {
    url: string
-   type: 'IMAGE' | 'VIDEO' | 'FILE'
+   type: 'IMAGE' | 'VIDEO' | 'RAW'
    name: string
 }
 
+export interface Reaction {
+   messageId: number;
+   userId: number;
+   type: 'LIKE' | 'LOVE' | 'LAUGH' | 'SAD' | 'ANGRY' | 'WOW';
+   createdAt: string;
+}
+
+export interface MessageStatus {
+   messageId: number;
+   memberId: number;
+   status: 'READ' | 'UNREAD';
+}
+
+export interface User {
+   userId: number;
+   fullName: string;
+   email: string;
+   avatar: string;
+   dob: string;
+   gender: 'MALE' | 'FEMALE' | 'OTHER';
+   bio: string;
+}
+
 export interface ChatMessage {
-   messageId: number
-   createdAt: Date
-   isOwner: boolean // true if the message is sent by the current user
-   content: string
-   senderInfo: {
-      senderId: number
-      senderName: string
-      senderAvatar?: string
-   }
-   attachments?: Attachment[]
-   reactions?: MessageReaction[]
+   messageId: number;
+   chatId: number;
+   senderId: number;
+   content: string;
+   createdAt: string;
+   isEdited: boolean;
+   isDeleted: boolean;
+   replyTo: number | null;
+   sender: User;
+   attachments: Attachment[];
+   reactions?: Reaction[];
+   replyToMessage: number | null;
+   messageStatus: MessageStatus[];
+   isOwner: boolean;
 }
