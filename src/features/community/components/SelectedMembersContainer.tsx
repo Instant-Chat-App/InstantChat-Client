@@ -12,8 +12,8 @@ function SelectedMembersContainer({ selectedMembers, onRemoveSelectedMember }: P
    return (
       <div className='flex flex-1 items-center overflow-x-auto'>
          {selectedMembers.map((member) => (
-            <div className='mr-1 rounded-lg bg-gray-200 p-1'>
-               <div key={member.id} className='flex items-center gap-1'>
+            <div key={member.id} className='mr-1 rounded-lg bg-gray-200 p-1'>
+               <div className='flex items-center gap-1'>
                   <img
                      src={member.avatar || '/placeholder.svg'}
                      alt={member.fullName}

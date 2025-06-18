@@ -42,7 +42,7 @@ function CommunityDetail({ detail, children }: Props) {
    const form = useForm<UpdateCommunityFormData>({
       resolver: zodResolver(updateCommunityFormSchema),
       defaultValues: {
-         chatName: detail.chatName || '',
+         name: detail.chatName || '',
          description: detail.description || '',
          coverImage: detail.coverImage || ''
       }
@@ -91,7 +91,7 @@ function CommunityDetail({ detail, children }: Props) {
                                        />
                                        <AvatarFallback className='bg-green-400 text-[50px] text-white'>
                                           {form
-                                             .getValues('chatName')
+                                             .getValues('name')
                                              ?.charAt(0)
                                              .toUpperCase() || ''}
                                        </AvatarFallback>
@@ -120,7 +120,7 @@ function CommunityDetail({ detail, children }: Props) {
                      {/* Community Name */}
                      <FormField
                         control={form.control}
-                        name='chatName'
+                        name='name'
                         render={({ field }) => (
                            <FormItem>
                               <FormLabel>

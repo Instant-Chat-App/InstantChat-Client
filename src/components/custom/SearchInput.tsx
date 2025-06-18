@@ -1,33 +1,38 @@
+import { findUserByPhone } from '@/features/user/services/UserService'
 import { UserInfo } from '@/features/user/types/User'
 import { Search } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Input } from '../ui/input'
 
 interface Props {
-   onSearchResult: (result: UserInfo[]) => void
+   onSetSearchResult: (result: UserInfo | null) => void
+   onSetSearchQuery: (query: string) => void
+   searchQuery: string
 }
 
-function SearchInput({ onSearchResult }: Props) {
-   const [searchQuery, setSearchQuery] = useState<string>('')
+function SearchInput({ onSetSearchResult, onSetSearchQuery, searchQuery }: Props) {
    const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
 
    // Debounce effect
    useEffect(() => {
       if (!searchQuery.trim()) {
-         onSearchResult([])
+         onSetSearchResult(null)
          return
       }
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current)
       debounceTimeout.current = setTimeout(() => {
          handleSearch(searchQuery)
-      }, 1500)
+      }, 1000)
 
       return () => {
          if (debounceTimeout.current) clearTimeout(debounceTimeout.current)
       }
    }, [searchQuery])
 
-   const handleSearch = async (keyword: string) => {}
+   const handleSearch = async (keyword: string) => {
+      const response = await findUserByPhone(keyword)
+      response.data ? onSetSearchResult(response.data) : onSetSearchResult(null)
+   }
 
    return (
       <div className='flex space-x-2'>
@@ -36,7 +41,7 @@ function SearchInput({ onSearchResult }: Props) {
             <Input
                placeholder='Search phone number...'
                value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
+               onChange={(e) => onSetSearchQuery(e.target.value)}
                className='pl-10'
             />
          </div>

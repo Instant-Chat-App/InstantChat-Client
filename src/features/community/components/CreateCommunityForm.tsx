@@ -1,4 +1,3 @@
-import SearchInput from '@/components/custom/SearchInput'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,11 +18,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
+import useUser from '@/features/user/hooks/useUser'
 import { UserInfo } from '@/features/user/types/User'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Camera, Check, Settings, Users } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useCreateCommunity } from '../hooks/useCommunity'
 import { CommunityFormData, communityFormSchema } from '../types/Community'
 import SelectMemberCard from './SelectMemberCard'
 import SelectedMembersContainer from './SelectedMembersContainer'
@@ -37,62 +38,25 @@ const steps = [
    {
       id: 1,
       title: 'Add Members',
-      icon: Users,
       description: 'Select people to add to your group'
    },
-   { id: 2, title: 'Group Settings', icon: Settings, description: 'Set group name and photo' },
-   { id: 3, title: 'Review', icon: Check, description: 'Review and create your group' }
-]
-
-export const fakeUsers: UserInfo[] = [
-   {
-      id: 1,
-      fullName: 'John Doe',
-      phone: '0912345678',
-      email: 'john.doe@example.com',
-      dob: new Date('1990-03-15'),
-      gender: 'MALE',
-      avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-      bio: 'Software engineer. Loves coffee & coding.',
-      isContact: true
-   },
-   {
-      id: 2,
-      fullName: 'Jane Smith',
-      phone: '0987654321',
-      email: 'jane.smith@example.com',
-      dob: new Date('1992-07-22'),
-      gender: 'FEMALE',
-      avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-      bio: 'Designer and creative thinker.',
-      isContact: true
-   },
-   {
-      id: 3,
-      fullName: 'Mike Johnson',
-      phone: '0123456789',
-      email: 'mike.johnson@example.com',
-      dob: new Date('1988-11-10'),
-      gender: 'MALE',
-      avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-      bio: 'Product manager with 5+ years experience.',
-      isContact: true
-   }
+   { id: 2, title: 'Group Settings', description: 'Set group name and photo' }
 ]
 
 export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
    const fileInputRef = useRef<HTMLInputElement>(null)
    const [currentStep, setCurrentStep] = useState(1)
    const [searchQuery, setSearchQuery] = useState('')
-   const [searchResults, setSearchResults] = useState<UserInfo[]>([])
-   const [suggestedMembers, setSuggestedMembers] = useState<UserInfo[]>(fakeUsers)
+   const [searchResults, setSearchResults] = useState<UserInfo | null>(null)
    const [selectedMembers, setSelectedMembers] = useState<UserInfo[]>([])
    const [isDialogOpen, setIsDialogOpen] = useState(false)
+   const { userContacts } = useUser()
+   const { mutate } = useCreateCommunity()
 
    const form = useForm<CommunityFormData>({
       resolver: zodResolver(communityFormSchema),
       defaultValues: {
-         chatName: '',
+         name: '',
          coverImage: '',
          description: '',
          type: type,
@@ -106,20 +70,40 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
          setSelectedMembers([])
          setCurrentStep(1)
          setSearchQuery('')
-         setSearchResults([])
+         setSearchResults(null)
       }
    }, [isDialogOpen, form])
+
+   // Reset search results when search query changes
+   useEffect(() => {
+      if (!searchQuery.trim()) {
+         setSearchResults(null)
+      }
+   }, [searchQuery])
 
    // Toggle member
    const handleMemberToggle = useCallback(
       (member: UserInfo) => {
+         console.log('Toggle member:', member.id, member.fullName)
+         console.log(
+            'Current selectedMembers:',
+            selectedMembers.map((m) => ({ id: m.id, name: m.fullName }))
+         )
+
          setSelectedMembers((prev) => {
             let newSelected: UserInfo[]
             if (prev.some((m) => m.id === member.id)) {
                newSelected = prev.filter((m) => m.id !== member.id)
+               console.log('Removing member:', member.id)
             } else {
                newSelected = [...prev, member]
+               console.log('Adding member:', member.id)
             }
+            console.log(
+               'New selectedMembers:',
+               newSelected.map((m) => ({ id: m.id, name: m.fullName }))
+            )
+
             form.setValue(
                'members',
                newSelected.map((m) => m.id),
@@ -128,7 +112,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
             return newSelected
          })
       },
-      [form]
+      [form, selectedMembers]
    )
 
    const handleRemoveSelectedMember = (memberId: number) => {
@@ -147,8 +131,30 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
       if (file) {
+         // Kiểm tra kích thước file (giới hạn 5MB)
+         if (file.size > 5 * 1024 * 1024) {
+            alert('File size should be less than 5MB')
+            return
+         }
+
+         // Kiểm tra loại file
+         if (!file.type.startsWith('image/')) {
+            alert('Please select an image file')
+            return
+         }
+
          const reader = new FileReader()
-         reader.onload = (e) => form.setValue('coverImage', e.target?.result as string)
+         reader.onload = (e) => {
+            const result = e.target?.result as string
+            if (result) {
+               form.setValue('coverImage', result)
+               console.log('Image converted to base64 successfully')
+            }
+         }
+         reader.onerror = () => {
+            console.error('Error reading file')
+            alert('Error reading file. Please try again.')
+         }
          reader.readAsDataURL(file)
       }
    }
@@ -162,9 +168,76 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
    }
 
    const onSubmit = (data: CommunityFormData) => {
-      console.log(data)
-      // data.members sẽ là mảng id
-      // selectedMembers là mảng UserInfo
+      console.log('Form submitted with data:', data)
+      console.log('Selected members:', selectedMembers)
+
+      // Đảm bảo members được cập nhật đúng
+      const finalData = {
+         ...data,
+         members: selectedMembers.map((m) => m.id)
+      }
+
+      console.log('Final submission data:', finalData)
+
+      // TODO: Gọi API tạo group/channel ở đây
+      // createCommunity(finalData)
+
+      // Đóng dialog sau khi submit thành công
+      setIsDialogOpen(false)
+   }
+
+   const handleSubmit = async () => {
+      // Đảm bảo members được cập nhật đúng
+      const membersArray = selectedMembers.map((m) => m.id)
+      form.setValue('members', membersArray)
+
+      const formData = new FormData()
+      formData.append('chatName', form.getValues('name'))
+
+      // Xử lý coverImage - nếu có thì gửi base64, nếu không thì gửi chuỗi rỗng
+      const coverImage = form.getValues('coverImage')
+      if (coverImage && coverImage.trim() !== '') {
+         formData.append('coverImage', coverImage)
+      } else {
+         formData.append('coverImage', '')
+      }
+
+      formData.append('description', form.getValues('description') || '')
+
+      // Thêm members dưới dạng JSON string array
+      if (membersArray && membersArray.length > 0) {
+         formData.append('members', JSON.stringify(membersArray))
+      } else {
+         formData.append('members', JSON.stringify([]))
+      }
+
+      console.log('Submitting FormData:', {
+         chatName: form.getValues('name'),
+         coverImage: coverImage ? 'base64_image_data' : 'empty',
+         description: form.getValues('description'),
+         selectedMembers: selectedMembers.map((m) => ({ id: m.id, name: m.fullName })),
+         membersArray: membersArray,
+         membersJSON: JSON.stringify(membersArray),
+         membersLength: membersArray.length
+      })
+
+      // Log FormData entries for debugging
+      console.log('FormData entries:')
+      for (let [key, value] of formData.entries()) {
+         if (key === 'members') {
+            console.log(`${key}:`, value)
+         } else {
+            console.log(`${key}:`, value)
+         }
+      }
+
+      try {
+         await mutate({ type, data: formData })
+         setIsDialogOpen(false)
+      } catch (error) {
+         console.error('Error creating community:', error)
+         // Có thể thêm toast notification ở đây
+      }
    }
 
    const canProceed = () => {
@@ -172,9 +245,14 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
          case 1:
             return selectedMembers.length > 0
          case 2:
-            return form.getValues('chatName').trim().length > 0
-         case 3:
-            return true
+            const chatName = form.getValues('name')
+            const isValid = chatName && chatName.trim().length > 0
+            console.log('Step 2 validation:', {
+               chatName,
+               isValid,
+               selectedMembers: selectedMembers.length
+            })
+            return isValid
          default:
             return false
       }
@@ -186,7 +264,11 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
             return (
                <div className='space-y-4'>
                   {/* Search Input */}
-                  <SearchInput onSearchResult={setSearchResults} />
+                  {/* <SearchInput
+                     onSetSearchResult={setSearchResults}
+                     onSetSearchQuery={setSearchQuery}
+                     searchQuery={searchQuery}
+                  /> */}
 
                   {/* Selected members */}
                   <SelectedMembersContainer
@@ -198,24 +280,34 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
                   <div className='space-y-2'>
                      <h3 className='font-medium'>Select Members</h3>
                      <ScrollArea className='h-[200px] rounded-md border p-4'>
-                        {!searchQuery &&
-                           suggestedMembers.map((member) => (
-                              <SelectMemberCard
-                                 key={member.id}
-                                 isSelected={selectedMembers.some((m) => m.id === member.id)}
-                                 member={member}
-                                 onMemberToggle={() => handleMemberToggle(member)}
-                              />
-                           ))}
-                        {searchQuery &&
-                           searchResults.map((member) => (
-                              <SelectMemberCard
-                                 key={member.id}
-                                 isSelected={selectedMembers.some((m) => m.id === member.id)}
-                                 member={member}
-                                 onMemberToggle={() => handleMemberToggle(member)}
-                              />
-                           ))}
+                        {!searchQuery && userContacts ? (
+                           <div className='space-y-2'>
+                              {userContacts.map((member) => (
+                                 <SelectMemberCard
+                                    key={member.id}
+                                    isSelected={selectedMembers.some(
+                                       (m) => m.id === member.id
+                                    )}
+                                    member={member}
+                                    onMemberToggle={() => handleMemberToggle(member)}
+                                 />
+                              ))}
+                           </div>
+                        ) : (
+                           searchQuery &&
+                           searchResults && (
+                              <div className='space-y-2'>
+                                 <SelectMemberCard
+                                    key={`search-${searchResults.id}`}
+                                    isSelected={selectedMembers.some(
+                                       (m) => m.id === searchResults.id
+                                    )}
+                                    member={searchResults}
+                                    onMemberToggle={() => handleMemberToggle(searchResults)}
+                                 />
+                              </div>
+                           )
+                        )}
                      </ScrollArea>
                   </div>
                </div>
@@ -236,7 +328,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
                                        alt='Group Cover'
                                     />
                                     <AvatarFallback className='text-lg'>
-                                       {form.getValues('chatName')?.charAt(0) || ''}
+                                       {form.getValues('name')?.charAt(0) || ''}
                                     </AvatarFallback>
                                  </Avatar>
                                  <Button
@@ -263,7 +355,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
 
                   <FormField
                      control={form.control}
-                     name='chatName'
+                     name='name'
                      render={({ field }) => (
                         <FormItem>
                            <FormLabel>{type === 'GROUP' ? 'Tên nhóm' : 'Tên kênh'}</FormLabel>
@@ -290,61 +382,6 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
                   />
                </div>
             )
-         case 3:
-            return (
-               <div className='space-y-4'>
-                  <div className='rounded-lg border p-4'>
-                     <h3 className='mb-4 font-medium'>Group Information</h3>
-                     <div className='space-y-2'>
-                        <div className='flex items-center gap-3'>
-                           <Avatar className='h-12 w-12'>
-                              <AvatarImage
-                                 src={form.getValues('coverImage') || '/placeholder.svg'}
-                                 alt='Group Cover'
-                              />
-                              <AvatarFallback className='text-lg'>
-                                 {form.getValues('chatName')?.charAt(0) || ''}
-                              </AvatarFallback>
-                           </Avatar>
-                           <div>
-                              <p className='font-medium'>{form.getValues('chatName')}</p>
-                              <p className='text-muted-foreground text-sm'>
-                                 {form.getValues('description') || 'No description'}
-                              </p>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-
-                  <div className='rounded-lg border p-4'>
-                     <h3 className='mb-4 font-medium'>Selected Members</h3>
-                     <ScrollArea className='h-[200px]'>
-                        {selectedMembers.length > 0 ? (
-                           <div className='space-y-2'>
-                              {selectedMembers.map((member) => (
-                                 <div
-                                    key={member.id}
-                                    className='flex items-center gap-2 rounded-lg border p-2'
-                                 >
-                                    <Avatar className='h-8 w-8'>
-                                       <AvatarImage src={member.avatar} />
-                                       <AvatarFallback>
-                                          {member.fullName.charAt(0)}
-                                       </AvatarFallback>
-                                    </Avatar>
-                                    <span>{member.fullName}</span>
-                                 </div>
-                              ))}
-                           </div>
-                        ) : (
-                           <p className='text-muted-foreground text-center'>
-                              No members selected
-                           </p>
-                        )}
-                     </ScrollArea>
-                  </div>
-               </div>
-            )
          default:
             return null
       }
@@ -353,34 +390,10 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
    return (
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
          <DialogTrigger>{children}</DialogTrigger>
-         <DialogContent className='sm:max-w-2xl'>
+         <DialogContent className='sm:max-w-lg'>
             <DialogHeader>
                <DialogTitle>{type === 'CHANNEL' ? 'New Channel' : 'New Group'}</DialogTitle>
             </DialogHeader>
-
-            {/* Step Indicator */}
-            <div className='mb-6 flex items-center justify-between'>
-               {steps.map((step, index) => (
-                  <div key={step.id} className='flex items-center'>
-                     <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                           currentStep >= step.id
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'border-muted-foreground text-muted-foreground'
-                        }`}
-                     >
-                        <step.icon className='h-5 w-5' />
-                     </div>
-                     {index < steps.length - 1 && (
-                        <div
-                           className={`mx-2 h-0.5 w-16 ${
-                              currentStep > step.id ? 'bg-primary' : 'bg-muted-foreground/30'
-                           }`}
-                        />
-                     )}
-                  </div>
-               ))}
-            </div>
 
             {/* Step Title */}
             <div className='mb-6 text-center'>
@@ -411,7 +424,7 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
                            Next
                         </Button>
                      ) : (
-                        <Button type='submit' disabled={!canProceed()}>
+                        <Button type='button' onClick={handleSubmit}>
                            Create {type === 'CHANNEL' ? 'Channel' : 'Group'}
                         </Button>
                      )}

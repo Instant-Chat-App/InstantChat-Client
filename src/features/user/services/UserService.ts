@@ -1,11 +1,19 @@
 import { DataResponse } from '@/types/DataResponse'
 import { SERVER_URL } from '@/utils/Constant'
 import { http } from '@/utils/Http'
-import { UserInfo, UpdateProfileData, ChangePasswordData } from '../types/User'
 import axios from 'axios'
+import { ChangePasswordData, UpdateProfileData, UserInfo } from '../types/User'
 
 export const getUserProfile = () => {
    return http.get<UserInfo>(`${SERVER_URL}/api/auth/profile`)
+}
+
+export const getUserContacts = () => {
+   return http.get<UserInfo[]>(`${SERVER_URL}/api/users/contacts`)
+}
+
+export const findUserByPhone = (phone: string) => {
+   return http.get<UserInfo>(`${SERVER_URL}/api/users/phone/${phone}`)
 }
 
 export const updateProfile = (

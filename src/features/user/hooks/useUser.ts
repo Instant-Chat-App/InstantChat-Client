@@ -1,7 +1,13 @@
+import { getCurrentUser } from '@/features/auth/services/AuthService'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { getCurrentUser } from '@/features/auth/services/AuthService'
-import { changePassword, updateProfile, uploadAvatar } from '../services/UserService'
+import {
+   changePassword,
+   findUserByPhone,
+   getUserContacts,
+   updateProfile,
+   uploadAvatar
+} from '../services/UserService'
 import { ChangePasswordData, UpdateProfileData } from '../types/User'
 
 const useUser = () => {
@@ -16,6 +22,14 @@ const useUser = () => {
       queryKey: ['userProfile'],
       queryFn: getCurrentUser
    })
+
+   const { data: userContacts } = useQuery({
+      queryKey: ['userContacts'],
+      queryFn: getUserContacts,
+      select: (data) => data.data || []
+   })
+
+
 
    // Extract user profile from response
    const userProfile = userProfileResponse?.data
@@ -86,7 +100,8 @@ const useUser = () => {
       error,
       updateProfileMutation,
       uploadAvatarMutation,
-      changePasswordMutation
+      changePasswordMutation,
+      userContacts
    }
 }
 

@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { UserInfo } from '@/features/user/types/User'
-import { Phone } from 'lucide-react'
+import { Mail } from 'lucide-react'
 
 interface Props {
    contact: UserInfo
@@ -23,7 +23,7 @@ function MemberPrivateCard({ contact, onCreateMessage }: Props) {
             <div className='flex flex-col justify-start text-sm'>
                <span className='text-[15px] font-medium'>{contact.fullName}</span>
                <div className='flex items-center gap-1 text-gray-500'>
-                  {<Phone className='size-3' />} {contact.phone}
+                  {<Mail className='size-3' />} {contact.email}
                </div>
             </div>
          </div>
