@@ -27,7 +27,7 @@ function UserSetting({ children }: Props) {
             </UpdateProfileForm>
 
             {/*  Contacts  */}
-            <ContactList contacts={contacts}>
+            <ContactList >
                <button className='hover:bg-accent flex w-full items-center gap-2 rounded-md p-1'>
                   <BookUser className='size-4' />
                   <div>Contacts</div>
