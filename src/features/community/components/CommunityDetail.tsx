@@ -24,6 +24,8 @@ import { Camera } from 'lucide-react'
 import * as React from 'react'
 import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
+import useCurrentMemberChat from '../hooks/useCurrentMemberChat'
 import {
    CommunityDetailType,
    UpdateCommunityFormData,
@@ -38,7 +40,11 @@ interface Props {
 
 function CommunityDetail({ detail, children }: Props) {
    const fileInputRef = useRef<HTMLInputElement>(null)
-   const isOwner = detail.members.some((member) => member.memberId === 3)
+   const [searchParams] = useSearchParams()
+   const chatId = searchParams.get('id')
+   const isOwner = true
+   const { currentMemberChat } = useCurrentMemberChat(Number(chatId))
+
    const form = useForm<UpdateCommunityFormData>({
       resolver: zodResolver(updateCommunityFormSchema),
       defaultValues: {
@@ -90,10 +96,8 @@ function CommunityDetail({ detail, children }: Props) {
                                           alt='Group Cover'
                                        />
                                        <AvatarFallback className='bg-green-400 text-[50px] text-white'>
-                                          {form
-                                             .getValues('name')
-                                             ?.charAt(0)
-                                             .toUpperCase() || ''}
+                                          {form.getValues('name')?.charAt(0).toUpperCase() ||
+                                             ''}
                                        </AvatarFallback>
                                     </Avatar>
                                     <Button

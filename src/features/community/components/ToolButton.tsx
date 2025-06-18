@@ -28,7 +28,7 @@ function ToolButton() {
                   </CreateCommunityForm>
 
                   {/*  Create Channel  */}
-                  <CreateCommunityForm type={'CHANNEL'}>
+                  <CreateCommunityForm type={'GROUP'}>
                      <button className='flex w-full items-center gap-3 rounded px-3 py-1 hover:bg-gray-200'>
                         <div>
                            <UsersRound className='size-4' />

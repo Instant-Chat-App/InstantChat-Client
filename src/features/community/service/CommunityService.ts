@@ -1,49 +1,23 @@
 import { axiosInstance } from '@/lib/Axios'
 import { SERVER_URL } from '@/utils/Constant'
 
-export const createCommunity = async (type: 'GROUP' | 'CHANNEL', data: FormData) => {
+export const createCommunity = async (
+   type: 'GROUP' | 'CHANNEL',
+   data: { name: string; coverImage: string; description: string; members: number[] }
+) => {
    const url = `${SERVER_URL}/api/chats/create?type=${type}`
 
    try {
-      // Convert FormData to JSON object
-      const membersData = data.get('members') as string
-      let membersArray: number[] = []
-
-      try {
-         if (membersData) {
-            const parsed = JSON.parse(membersData)
-            // Đảm bảo parsed là array
-            if (Array.isArray(parsed)) {
-               membersArray = parsed
-            } else {
-               console.error('Parsed members is not an array:', parsed)
-               membersArray = []
-            }
-         }
-      } catch (error) {
-         console.error('Error parsing members JSON:', error)
-         console.error('Raw members data:', membersData)
-         membersArray = []
-      }
-
-      // Final validation
-      if (!Array.isArray(membersArray)) {
-         console.error('membersArray is not an array, converting to empty array')
-         membersArray = []
-      }
-
+      // Sử dụng data là object thường
       const jsonData = {
-         name: data.get('chatName'),
-         coverImage: data.get('coverImage'),
-         description: data.get('description'),
-         members: membersArray
+         name: data.name,
+         coverImage: data.coverImage,
+         description: data.description,
+         members: Array.isArray(data.members) ? data.members : []
       }
 
       console.log('Sending request to:', url)
       console.log('Request type:', type)
-      console.log('Raw members data:', membersData)
-      console.log('Parsed members array:', membersArray)
-      console.log('Is membersArray an array?', Array.isArray(membersArray))
       console.log('Request data:', {
          ...jsonData,
          coverImage: jsonData.coverImage ? 'base64_image_data' : 'empty'
