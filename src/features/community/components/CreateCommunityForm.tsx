@@ -332,7 +332,9 @@ export function CreateCommunityForm({ type, children }: Props) {
                      name='name'
                      render={({ field }) => (
                         <FormItem>
-                           <FormLabel>{type === 'GROUP' ? 'Tên nhóm' : 'Tên kênh'}</FormLabel>
+                           <FormLabel>
+                              {type === 'GROUP' ? 'Group name' : 'Channel name'}
+                           </FormLabel>
                            <FormControl>
                               <Input {...field} className='text-black' />
                            </FormControl>
@@ -346,7 +348,7 @@ export function CreateCommunityForm({ type, children }: Props) {
                      name='description'
                      render={({ field }) => (
                         <FormItem>
-                           <FormLabel>Mô tả</FormLabel>
+                           <FormLabel>Description</FormLabel>
                            <FormControl>
                               <Textarea {...field} />
                            </FormControl>
