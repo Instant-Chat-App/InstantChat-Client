@@ -1,9 +1,15 @@
 import { getCurrentUser } from '@/features/auth/services/AuthService'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+   useMutation,
+   UseMutationResult,
+   useQuery,
+   useQueryClient
+} from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
+   addContact,
    changePassword,
-   findUserByPhone,
+   deleteContact,
    getUserContacts,
    updateProfile,
    uploadAvatar
@@ -28,8 +34,6 @@ const useUser = () => {
       queryFn: getUserContacts,
       select: (data) => data.data || []
    })
-
-
 
    // Extract user profile from response
    const userProfile = userProfileResponse?.data
@@ -94,6 +98,7 @@ const useUser = () => {
          })
       }
    })
+
    return {
       userProfile,
       isLoading,
@@ -103,6 +108,26 @@ const useUser = () => {
       changePasswordMutation,
       userContacts
    }
+}
+
+export function useAddContact(): UseMutationResult<any, Error, number> {
+   const queryClient = useQueryClient()
+   return useMutation({
+      mutationFn: (userId: number) => addContact(userId),
+      onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ['userContacts'] })
+      }
+   })
+}
+
+export function useDeleteContact(): UseMutationResult<any, Error, number> {
+   const queryClient = useQueryClient()
+   return useMutation({
+      mutationFn: (userId: number) => deleteContact(userId),
+      onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ['userContacts'] })
+      }
+   })
 }
 
 export default useUser

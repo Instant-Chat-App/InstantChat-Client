@@ -48,3 +48,11 @@ export const uploadAvatar = async (file: File): Promise<DataResponse<UserInfo>> 
 export const changePassword = (data: ChangePasswordData): Promise<DataResponse<null>> => {
    return http.put<null, ChangePasswordData>(`${SERVER_URL}/api/auth/change-password`, data)
 }
+
+export const addContact = (userId: number) => {
+   return http.post(`${SERVER_URL}/api/users/contacts/${userId}`, {})
+}
+
+export const deleteContact = (userId: number) => {
+   return http.delete(`${SERVER_URL}/api/users/contacts/${userId}`)
+}
