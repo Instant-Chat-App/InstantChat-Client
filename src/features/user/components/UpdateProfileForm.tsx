@@ -33,16 +33,16 @@ import useUser from '../hooks/useUser'
 import { UpdateProfileData } from '../types/User'
 
 const updateProfileSchema = z.object({
-   fullName: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
+   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
    dob: z.string({
-      required_error: 'Vui lòng chọn ngày sinh'
+      required_error: 'Please select your date of birth'
    }),
    gender: z.enum(['MALE', 'FEMALE'], {
-      required_error: 'Vui lòng chọn giới tính'
+      required_error: 'Please select your gender'
    }),
    bio: z.string().nullable().optional(),
    phone: z.string(),
-   email: z.string().email()
+   email: z.string().email('Invalid email address')
 })
 
 type UpdateProfileFormValues = z.infer<typeof updateProfileSchema>
@@ -156,7 +156,7 @@ function UpdateProfileForm({ children }: Props) {
          <DialogTrigger asChild>{children}</DialogTrigger>
          <DialogContent className='max-h-[85vh] max-w-md overflow-y-auto'>
             <DialogHeader>
-               <DialogTitle>Cập nhật thông tin cá nhân</DialogTitle>
+               <DialogTitle>Update Profile</DialogTitle>
             </DialogHeader>
 
             {isLoading ? (
@@ -206,7 +206,7 @@ function UpdateProfileForm({ children }: Props) {
                         name='fullName'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Họ và tên</FormLabel>
+                              <FormLabel>Full Name</FormLabel>
                               <FormControl>
                                  <Input {...field} disabled={isSubmitting} />
                               </FormControl>
@@ -221,7 +221,7 @@ function UpdateProfileForm({ children }: Props) {
                         name='phone'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Số điện thoại</FormLabel>
+                              <FormLabel>Phone Number</FormLabel>
                               <FormControl>
                                  <Input {...field} disabled />
                               </FormControl>
@@ -251,7 +251,7 @@ function UpdateProfileForm({ children }: Props) {
                         name='dob'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Ngày sinh</FormLabel>
+                              <FormLabel>Date of Birth</FormLabel>
                               <FormControl>
                                  <Input type='date' {...field} disabled={isSubmitting} />
                               </FormControl>
@@ -266,7 +266,7 @@ function UpdateProfileForm({ children }: Props) {
                         name='gender'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Giới tính</FormLabel>
+                              <FormLabel>Gender</FormLabel>
                               <Select
                                  onValueChange={field.onChange}
                                  defaultValue={field.value}
@@ -274,12 +274,12 @@ function UpdateProfileForm({ children }: Props) {
                               >
                                  <FormControl>
                                     <SelectTrigger>
-                                       <SelectValue placeholder='Chọn giới tính' />
+                                       <SelectValue placeholder='Select gender' />
                                     </SelectTrigger>
                                  </FormControl>
                                  <SelectContent>
-                                    <SelectItem value='MALE'>Nam</SelectItem>
-                                    <SelectItem value='FEMALE'>Nữ</SelectItem>
+                                    <SelectItem value='MALE'>Male</SelectItem>
+                                    <SelectItem value='FEMALE'>Female</SelectItem>
                                  </SelectContent>
                               </Select>
                               <FormMessage />
@@ -293,7 +293,7 @@ function UpdateProfileForm({ children }: Props) {
                         name='bio'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Tiểu sử</FormLabel>
+                              <FormLabel>Bio</FormLabel>
                               <FormControl>
                                  <Textarea
                                     {...field}
@@ -316,10 +316,10 @@ function UpdateProfileForm({ children }: Props) {
                         {isSubmitting ? (
                            <>
                               <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                              Đang cập nhật...
+                              Updating...
                            </>
                         ) : (
-                           'Cập nhật'
+                           'Update'
                         )}
                      </Button>
                   </form>

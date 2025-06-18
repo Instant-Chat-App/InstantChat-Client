@@ -130,7 +130,7 @@ function CommunityDetail({ detail, children }: Props) {
                         render={({ field }) => (
                            <FormItem>
                               <FormLabel>
-                                 {detail.type === 'GROUP' ? 'Tên nhóm' : 'Tên kênh'}
+                                 {detail.type === 'GROUP' ? 'Group name' : 'Channel name'}
                               </FormLabel>
                               <FormControl>
                                  <Input {...field} className='text-black' />
@@ -145,7 +145,7 @@ function CommunityDetail({ detail, children }: Props) {
                         name='description'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Mô tả</FormLabel>
+                              <FormLabel>Description</FormLabel>
                               <FormControl>
                                  <Textarea {...field} className='text-black' />
                               </FormControl>
