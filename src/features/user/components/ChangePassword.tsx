@@ -1,11 +1,3 @@
-import { Button } from '@/components/ui/button'
-import {
-   Dialog,
-   DialogContent,
-   DialogHeader,
-   DialogTitle,
-   DialogTrigger
-} from '@/components/ui/dialog'
 import {
    AlertDialog,
    AlertDialogAction,
@@ -16,6 +8,14 @@ import {
    AlertDialogHeader,
    AlertDialogTitle
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import {
+   Dialog,
+   DialogContent,
+   DialogHeader,
+   DialogTitle,
+   DialogTrigger
+} from '@/components/ui/dialog'
 import {
    Form,
    FormControl,
@@ -34,12 +34,12 @@ import useUser from '../hooks/useUser'
 
 const changePasswordSchema = z
    .object({
-      currentPassword: z.string().min(6, 'Mật khẩu hiện tại phải có ít nhất 6 ký tự'),
-      newPassword: z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự'),
-      confirmPassword: z.string().min(6, 'Xác nhận mật khẩu phải có ít nhất 6 ký tự')
+      currentPassword: z.string().min(6, 'Current password must be at least 6 characters'),
+      newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+      confirmPassword: z.string().min(6, 'Confirm password must be at least 6 characters')
    })
    .refine((data) => data.newPassword === data.confirmPassword, {
-      message: 'Mật khẩu xác nhận không khớp với mật khẩu mới',
+      message: 'Confirm password does not match new password',
       path: ['confirmPassword']
    })
 
@@ -68,7 +68,7 @@ function ChangePassword({ children }: Props) {
    })
 
    const handleOpenChange = (newOpen: boolean) => {
-      // Reset form khi đóng dialog
+      // Reset form when closing dialog
       if (!newOpen) {
          form.reset()
       }
@@ -76,25 +76,25 @@ function ChangePassword({ children }: Props) {
    }
 
    const onSubmit = (data: ChangePasswordFormValues) => {
-      // Lưu dữ liệu form và hiển thị dialog xác nhận
+      // Save form data and show confirm dialog
       setPasswordData(data)
       setShowConfirmDialog(true)
    }
 
-   // Xử lý khi người dùng xác nhận đổi mật khẩu
+   // Handle when user confirms changing password
    const handleConfirmChangePassword = () => {
       if (!passwordData) return
 
       changePasswordMutation.mutate(passwordData, {
          onSuccess: (response) => {
             if (response.success) {
-               setOpen(false) // Đóng dialog chính khi đổi mật khẩu thành công
+               setOpen(false) // Close main dialog when password change is successful
                form.reset() // Reset form
             }
-            setShowConfirmDialog(false) // Luôn đóng dialog xác nhận
+            setShowConfirmDialog(false) // Always close confirm dialog
          },
          onError: () => {
-            setShowConfirmDialog(false) // Đóng dialog xác nhận nếu có lỗi
+            setShowConfirmDialog(false) // Close confirm dialog if there's an error
          }
       })
    }
@@ -107,7 +107,7 @@ function ChangePassword({ children }: Props) {
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className='max-w-md'>
                <DialogHeader>
-                  <DialogTitle>Đổi mật khẩu</DialogTitle>
+                  <DialogTitle>Change Password</DialogTitle>
                </DialogHeader>
 
                <Form {...form}>
@@ -118,7 +118,7 @@ function ChangePassword({ children }: Props) {
                         name='currentPassword'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Mật khẩu hiện tại</FormLabel>
+                              <FormLabel>Current Password</FormLabel>
                               <FormControl>
                                  <div className='relative'>
                                     <Input
@@ -155,7 +155,7 @@ function ChangePassword({ children }: Props) {
                         name='newPassword'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Mật khẩu mới</FormLabel>
+                              <FormLabel>New Password</FormLabel>
                               <FormControl>
                                  <div className='relative'>
                                     <Input
@@ -190,7 +190,7 @@ function ChangePassword({ children }: Props) {
                         name='confirmPassword'
                         render={({ field }) => (
                            <FormItem>
-                              <FormLabel>Xác nhận mật khẩu mới</FormLabel>
+                              <FormLabel>Confirm New Password</FormLabel>
                               <FormControl>
                                  <div className='relative'>
                                     <Input
@@ -231,10 +231,10 @@ function ChangePassword({ children }: Props) {
                         {isSubmitting ? (
                            <>
                               <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                              Đang cập nhật...
+                              Updating...
                            </>
                         ) : (
-                           'Đổi mật khẩu'
+                           'Change Password'
                         )}
                      </Button>
                   </form>
@@ -246,14 +246,14 @@ function ChangePassword({ children }: Props) {
          <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
             <AlertDialogContent>
                <AlertDialogHeader>
-                  <AlertDialogTitle>Xác nhận đổi mật khẩu</AlertDialogTitle>
+                  <AlertDialogTitle>Confirm Change Password</AlertDialogTitle>
                   <AlertDialogDescription>
-                     Bạn có chắc chắn muốn thay đổi mật khẩu? Sau khi đổi mật khẩu, bạn sẽ cần
-                     sử dụng mật khẩu mới để đăng nhập vào tài khoản.
+                     Are you sure you want to change your password? After changing, you will
+                     need to use the new password to log in.
                   </AlertDialogDescription>
                </AlertDialogHeader>
                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                      onClick={handleConfirmChangePassword}
                      disabled={isSubmitting}
@@ -262,10 +262,10 @@ function ChangePassword({ children }: Props) {
                      {isSubmitting ? (
                         <>
                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                           Đang xử lý...
+                           Processing...
                         </>
                      ) : (
-                        'Xác nhận'
+                        'Confirm'
                      )}
                   </AlertDialogAction>
                </AlertDialogFooter>

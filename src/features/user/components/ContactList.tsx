@@ -7,7 +7,10 @@ import {
    DialogTrigger
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Plus, Trash } from 'lucide-react'
 import * as React from 'react'
+import { useEffect } from 'react'
 import useUser, { useAddContact, useDeleteContact } from '../hooks/useUser'
 import { findUserByPhone } from '../services/UserService'
 
@@ -22,48 +25,63 @@ function ContactList({ children }: Props) {
    const [searchLoading, setSearchLoading] = React.useState(false)
    const { mutate: addContact, ...addContactResult } = useAddContact()
    const { mutate: deleteContact, ...deleteContactResult } = useDeleteContact()
+   const debounceRef = React.useRef<NodeJS.Timeout | null>(null)
 
-   const handleSearch = async (e: React.FormEvent) => {
-      e.preventDefault()
-      if (!search) return
-      setSearchLoading(true)
-      try {
-         const res = await findUserByPhone(search)
-         setSearchResult(res.data)
-      } catch (err) {
+   useEffect(() => {
+      if (!search) {
+         setSearchLoading(false)
          setSearchResult(null)
+         return
       }
-      setSearchLoading(false)
-   }
+      setSearchLoading(true)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(async () => {
+         try {
+            const res = await findUserByPhone(search)
+            setSearchResult(res.data)
+         } catch (err) {
+            setSearchResult(null)
+         }
+         setSearchLoading(false)
+      }, 1000)
+      // Cleanup
+      return () => {
+         if (debounceRef.current) clearTimeout(debounceRef.current)
+      }
+   }, [search])
+
+   // Height for 4 contacts (each ~64px + gap)
+   const contactHeight = 68 // px (item height + margin)
+   const maxVisibleContacts = 4
+   const scrollAreaHeight =
+      Math.min(userContacts?.length || 0, maxVisibleContacts) * contactHeight ||
+      contactHeight * maxVisibleContacts
 
    return (
       <Dialog>
          <DialogTrigger>{children}</DialogTrigger>
-         <DialogContent>
+         <DialogContent className='w-[420px] max-w-full'>
             <DialogHeader>
                <DialogTitle>Contacts</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSearch} className='mb-4 flex gap-2'>
+            <div className='mb-4'>
                <Input
                   placeholder='Search by phone...'
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className='flex-1'
+                  className='flex-1 px-3 py-2 text-black'
                />
-               <button type='submit' className='bg-base rounded px-3 text-white'>
-                  Search
-               </button>
-            </form>
+            </div>
             {searchLoading && <div className='text-center text-gray-500'>Searching...</div>}
             {searchResult && (
-               <div className='mb-2 flex items-center gap-2 rounded-md border p-2'>
+               <div className='mb-2 flex items-center gap-2 rounded-md border bg-gray-50 p-3'>
                   <img
                      src={searchResult.avatar || 'https://via.placeholder.com/40'}
                      alt={searchResult.fullName}
-                     className='h-10 w-10 rounded-full'
+                     className='h-12 w-12 rounded-full object-cover'
                   />
                   <div className='flex flex-1 flex-col'>
-                     <span className='font-semibold'>{searchResult.fullName}</span>
+                     <span className='font-semibold text-black'>{searchResult.fullName}</span>
                      <span className='text-muted-foreground text-sm'>
                         {searchResult.phone}
                      </span>
@@ -74,11 +92,8 @@ function ContactList({ children }: Props) {
                         description={`Delete ${searchResult.fullName} from your contacts?`}
                         onConfirm={() => deleteContact(searchResult.id)}
                      >
-                        <button
-                           className='rounded bg-red-500 px-3 py-1 text-white'
-                           disabled={deleteContactResult.isPending}
-                        >
-                           {deleteContactResult.isPending ? 'Deleting...' : 'Delete'}
+                        <button disabled={deleteContactResult.isPending}>
+                           <Trash className='size-5 text-red-500' />
                         </button>
                      </ConfirmForm>
                   ) : (
@@ -87,52 +102,57 @@ function ContactList({ children }: Props) {
                         description={`Add ${searchResult.fullName} to your contacts?`}
                         onConfirm={() => addContact(searchResult.id)}
                      >
-                        <button
-                           className='rounded bg-green-500 px-3 py-1 text-white'
-                           disabled={addContactResult.isPending}
-                        >
-                           {addContactResult.isPending ? 'Adding...' : 'Add'}
+                        <button disabled={addContactResult.isPending}>
+                           <Plus className='text-green-500' />
                         </button>
                      </ConfirmForm>
                   )}
                </div>
             )}
             <div className='mt-4'>
-               <div className='mb-2 font-semibold'>Your Contacts</div>
-               {userContacts && userContacts.length > 0 ? (
-                  userContacts.map((contact: any) => (
-                     <div
-                        key={contact.id}
-                        className='hover:bg-accent flex items-center gap-2 rounded-md p-2'
-                     >
-                        <img
-                           src={contact.avatar || 'https://via.placeholder.com/40'}
-                           alt={contact.fullName}
-                           className='h-10 w-10 rounded-full'
-                        />
-                        <div className='flex flex-1 flex-col'>
-                           <span className='font-semibold'>{contact.fullName}</span>
-                           <span className='text-muted-foreground text-sm'>
-                              {contact.phone}
-                           </span>
-                        </div>
-                        <ConfirmForm
-                           title='Delete Contact'
-                           description={`Delete ${contact.fullName} from your contacts?`}
-                           onConfirm={() => deleteContact(contact.id)}
+               <div className='mb-2 font-semibold text-black'>Your Contacts</div>
+               <ScrollArea
+                  style={{
+                     height: scrollAreaHeight,
+                     maxHeight: contactHeight * maxVisibleContacts
+                  }}
+                  className='w-full pr-2'
+               >
+                  {userContacts && userContacts.length > 0 ? (
+                     userContacts.map((contact: any) => (
+                        <div
+                           key={contact.id}
+                           className='hover:bg-accent mb-1 flex items-center gap-3 rounded-md p-3 transition-all duration-150'
+                           style={{ minHeight: 56 }}
                         >
-                           <button
-                              className='rounded bg-red-500 px-3 py-1 text-white'
-                              disabled={deleteContactResult.isPending}
+                           <img
+                              src={contact.avatar || 'https://via.placeholder.com/40'}
+                              alt={contact.fullName}
+                              className='h-12 w-12 rounded-full object-cover'
+                           />
+                           <div className='flex flex-1 flex-col'>
+                              <span className='font-semibold text-black'>
+                                 {contact.fullName}
+                              </span>
+                              <span className='text-muted-foreground text-sm'>
+                                 {contact.phone}
+                              </span>
+                           </div>
+                           <ConfirmForm
+                              title='Delete Contact'
+                              description={`Delete ${contact.fullName} from your contacts?`}
+                              onConfirm={() => deleteContact(contact.id)}
                            >
-                              {deleteContactResult.isPending ? 'Deleting...' : 'Delete'}
-                           </button>
-                        </ConfirmForm>
-                     </div>
-                  ))
-               ) : (
-                  <div className='text-center text-gray-500'>No contacts found.</div>
-               )}
+                              <button disabled={deleteContactResult.isPending}>
+                                 <Trash className='size-5 text-red-500' />
+                              </button>
+                           </ConfirmForm>
+                        </div>
+                     ))
+                  ) : (
+                     <div className='text-center text-gray-500'>No contacts found.</div>
+                  )}
+               </ScrollArea>
             </div>
          </DialogContent>
       </Dialog>
