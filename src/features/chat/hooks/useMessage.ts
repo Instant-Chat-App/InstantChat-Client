@@ -127,9 +127,8 @@ function useMessage(chatId: number | null) {
 
         // Handle message events
         socket.on("newMessage", (payload: { chatId: number }) => {
-            if (payload.chatId === chatId) {
                 queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-            }
+            
         });
 
         // Handle delete message events
