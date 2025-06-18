@@ -1,5 +1,5 @@
 import { AUTH_STORAGE_KEY } from '@/features/auth/hooks/useAuth'
-import { AuthResponse } from '@/features/auth/types/AuthResponse'
+import { AuthResponse } from '@/features/auth/types/auth'
 import { DataResponse } from '@/types/DataResponse'
 import { SERVER_URL } from '@/utils/Constant'
 import axios from 'axios'
