@@ -32,8 +32,21 @@ export const getUserChats = async (): Promise<Chat[]> => {
    return response.data.data ?? [];
 }
 
-export const getChatMessages = async (chatId: number): Promise<ChatMessage[]> => {
-   return await axiosInstance.get<DataResponse<ChatMessage[]>>(`${API_URL}/messages/${chatId}`,{
+interface PaginationParams {
+    limit?: number;
+    cursor?: string;
+    direction?: 'before' | 'after';
+}
+
+interface PaginatedMessages {
+    data: ChatMessage[];
+    hasMore: boolean;
+    nextCursor?: string;
+}
+
+export const getChatMessages = async (chatId: number, params: PaginationParams): Promise<PaginatedMessages> => {
+    const response = await axiosInstance.get<DataResponse<PaginatedMessages>>(`${API_URL}/messages/${chatId}`, { 
+      params,
       headers: {
          'Authorization': `Bearer ${(() => {
                const tokenStr = localStorage.getItem('auth_tokens');
@@ -45,6 +58,6 @@ export const getChatMessages = async (chatId: number): Promise<ChatMessage[]> =>
             })()
             }`
       }
-   })
-      .then(response => response.data.data ?? [])
+    });
+    return response.data.data ?? { data: [], hasMore: false };
 }

@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useCallback, useState } from "react"
+import { useInfiniteQuery, useQuery, useQueryClient, InfiniteData } from "@tanstack/react-query"
+import { useCallback, useMemo, useState } from "react"
 import { getChatMessages } from "../services/ChatService"
 import { getSocket } from "@/socket/socket-io"
 import { useEffect } from "react"
@@ -10,6 +10,12 @@ interface FileAttachment {
     fileName: string;
     mimeType: string;
     base64Data: string;
+}
+
+export interface PaginatedMessages {
+    data: ChatMessage[];
+    hasMore: boolean;
+    nextCursor?: string;
 }
 
 function useMessage(chatId: number | null) {
@@ -27,42 +33,47 @@ function useMessage(chatId: number | null) {
     })
 
     const {
-        data: messages,
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
         isLoading,
         isError,
         refetch
-    } = useQuery<ChatMessage[]>({
+    } = useInfiniteQuery<PaginatedMessages, Error>({
         queryKey: ['messages', chatId],
-        queryFn: () => {
-            if (!chatId) return Promise.resolve([])
-            return getChatMessages(chatId)
+        queryFn: async ({ pageParam = undefined }) => {
+            if (!chatId) {
+                return {
+                    data: [],
+                    hasMore: false,
+                    nextCursor: undefined
+                }
+            }
+            const response = await getChatMessages(chatId, {
+                limit: 20,
+                cursor: pageParam as string | undefined,
+                direction: 'before'
+            })
+            return response
         },
-        enabled: !!chatId, // Only run query if chatId exists
-        staleTime: 1000 * 60 // Cache for 1 minute
+        initialPageParam: undefined,
+        getNextPageParam: (lastPage) => {
+            return lastPage.hasMore ? lastPage.nextCursor : undefined
+        },
+        enabled: !!chatId,
     })
 
-    // Process messages to add isOwner flag
-    const processedMessages = messages?.map(message => {
-        // Check if the message sender is the current user
-        const isCurrentUser = currentUser && message.sender.userId === currentUser.id
-        
-        const processedMessage: ChatMessage = {
-            ...message,
-            isOwner: isCurrentUser || false 
-        }
-        
-        return processedMessage
-    }) || []
+    // Process messages to combine all pages
+    const processedMessages = useMemo(() => {
+        if (!data?.pages) return []
+        // Flatten all pages and sort by createdAt
+        const allMessages = data.pages.flatMap(page => page.data)
+        return allMessages.sort((a, b) => 
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )
+    }, [data?.pages])
 
-    // Socket event to mark messages as read
-    const markMessagesAsRead = useCallback(() => {
-        const socket = getSocket();
-        if (!socket || !chatId) return;
-
-        socket.emit("readMessages", chatId);
-    }, [chatId]);
-
-    // Socket event to send a new message
     const sendMessage = useCallback(
         (content: string, attachments?: FileAttachment[], replyTo?: number) => {
             const socket = getSocket();
@@ -90,7 +101,10 @@ function useMessage(chatId: number | null) {
     const editMessage = useCallback(
         (messageId: number, content: string) => {
             const socket = getSocket();
-            if (!socket || !chatId) return;
+            if (!socket || !chatId) {
+                console.error('Socket or chatId not available:', { socket, chatId })
+                return;
+            }
             socket.emit("editMessage", { chatId, messageId, content });
         },
         [chatId]
@@ -100,38 +114,14 @@ function useMessage(chatId: number | null) {
     const reactMessage = useCallback(
         (messageId: number, reaction: Reaction['type']) => {
             const socket = getSocket();
-            if (!socket || !chatId || !currentUser) {
-                console.error("Missing required data for reaction:", { socket, chatId, currentUser });
+            if (!socket || !chatId) {
+                console.error("Socket or chatId not available:", { socket, chatId });
                 return;
             }
 
-            try {
-                // Send reaction with the expected parameters
-                socket.emit("reactMessage", chatId, messageId, reaction);
-            } catch (err) {
-                console.error("Error sending reaction:", err);
-                setError("Failed to send reaction. Please try again.");
-            }
+            socket.emit("reactMessage", chatId, messageId, reaction);
         },
-        [chatId, currentUser]
-    );
-
-    const deleteReaction = useCallback(
-        (messageId: number, reaction: Reaction['type']) => {
-            const socket = getSocket();
-            if (!socket || !chatId || !currentUser) {
-                console.error("Missing required data for deleting reaction:", { socket, chatId, currentUser });
-                return;
-            }
-
-            try {
-                socket.emit("deleteReaction", messageId, currentUser.id, reaction);
-            } catch (err) {
-                console.error("Error deleting reaction:", err);
-                setError("Failed to delete reaction. Please try again.");
-            }
-        },
-        [chatId, currentUser]
+        [chatId]
     );
 
     useEffect(() => {
@@ -146,25 +136,36 @@ function useMessage(chatId: number | null) {
 
         // Message events
         socket.on("newMessage", handleMessageEvent);
-        socket.on("editMessage", handleMessageEvent);
         socket.on("deleteMessage", handleMessageEvent);
 
+        // Handle edit message events
+        socket.on("editSuccess", (payload: { messageId: number, content: string }) => {
+            queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+            setError(null);
+        });
+
+        socket.on("messageEdited", (payload: { messageId: number }) => {
+            queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+        });
+
+        socket.on("editError", (payload: { error: string }) => {
+            console.error("Edit message error:", payload.error);
+            setError(payload.error);
+        });
+
         // Reaction events with specific handlers
-        socket.on("messageReacted", (payload: { messageId: number, userId: number, reaction: Reaction['type'] }) => {
-            console.log("Reaction received:", payload);
-            queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-        });
-
-        socket.on("reactionDeleted", (payload: { messageId: number, userId: number, reaction: Reaction['type'] }) => {
-            console.log("Reaction deleted:", payload);
-            queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-        });
-
-        // Success handlers for reactions
         socket.on("reactSuccess", (payload: { messageId: number, reaction: Reaction['type'] }) => {
-            console.log("Reaction success:", payload);
             queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-            setError(null); // Clear any previous errors
+            setError(null);
+        });
+
+        socket.on("messageReacted", (payload: { messageId: number, userId: number, reaction: Reaction['type'] }) => {
+            queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+        });
+
+        socket.on("reactError", (payload: { error: string }) => {
+            console.error("Reaction error:", payload.error);
+            setError(payload.error);
         });
 
         // Read status events
@@ -180,31 +181,19 @@ function useMessage(chatId: number | null) {
             setError(payload.error);
         });
 
-        // Error handlers for reactions
-        socket.on("reactError", (payload: { error: string }) => {
-            console.error("Reaction error:", payload.error);
-            setError(payload.error);
-        });
-
         return () => {
             socket.off("newMessage", handleMessageEvent);
-            socket.off("editMessage", handleMessageEvent);
             socket.off("deleteMessage", handleMessageEvent);
-            socket.off("messageReacted");
-            socket.off("reactionDeleted");
+            socket.off("editSuccess");
+            socket.off("messageEdited");
+            socket.off("editError");
             socket.off("reactSuccess");
+            socket.off("messageReacted");
+            socket.off("reactError");
             socket.off("readSuccess");
             socket.off("readError");
-            socket.off("reactError");
         };
     }, [chatId, queryClient]);
-
-    // Auto mark messages as read when chat is opened
-    useEffect(() => {
-        if (chatId) {
-            markMessagesAsRead();
-        }
-    }, [chatId, markMessagesAsRead]);
 
     return {
         messages: processedMessages,
@@ -215,11 +204,12 @@ function useMessage(chatId: number | null) {
         refetch,
         sendMessage,
         currentUser,
-        markMessagesAsRead,
         deleteMessage,
         editMessage,
         reactMessage,
-        deleteReaction
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
     }
 }
 

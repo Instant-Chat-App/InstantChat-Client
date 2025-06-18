@@ -7,18 +7,20 @@ import AttachmentList from './AttachmentList'
 import MessageActionPopover from './MessageActionPopover'
 import MessageListReaction from './MessageListReaction'
 import { format } from 'date-fns'
-import useMessage from '../hooks/useMessage'
 
 interface Props {
    message: ChatMessage
    users?: User[]
    isFirstInGroup?: boolean
    isLastInGroup?: boolean
+   currentUser:any
 }
 
-function MessageBubble({ message, users, isFirstInGroup = true, isLastInGroup = true }: Props) {
-   const { content, attachments, reactions, createdAt, isOwner, sender, messageId } = message
+function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, currentUser}: Props) {
+   const { messageId, content, sender, attachments, reactions} = message
    const hasContent = content && content.trim().length > 0
+   const isOwner = currentUser.id === message.senderId
+
 
    return (
       <div 
@@ -93,7 +95,6 @@ function MessageBubble({ message, users, isFirstInGroup = true, isLastInGroup = 
                      {reactions && reactions.length > 0 && (
                         <MessageListReaction
                            reactions={reactions}
-                           users={users}
                            messageId={messageId}
                            chatId={message.chatId}
                         >
@@ -127,7 +128,7 @@ function MessageBubble({ message, users, isFirstInGroup = true, isLastInGroup = 
                               isOwner ? 'text-white/70' : 'text-gray-500'
                            )}
                         >
-                           {format(new Date(createdAt), 'HH:mm')}
+                           {format(new Date(message.createdAt), 'HH:mm')}
                         </div>
                      )}
                   </div>

@@ -3,7 +3,9 @@ import useMessage from '../hooks/useMessage'
 import MessageBubble from './MessageBubble'
 import { ChatMessage } from '../types/Chat'
 import { format, isToday, isYesterday } from 'date-fns'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/ui/button'
+
 
 interface MessageContainerProps {
    chatId: number | null
@@ -14,137 +16,150 @@ interface MessageGroup {
    messages: ChatMessage[]
 }
 
+interface DateGroup {
+   date: string
+   messageGroups: MessageGroup[]
+}
+
 function MessageContainer({ chatId }: MessageContainerProps) {
-   const { messages, isLoading, error, markMessagesAsRead } = useMessage(chatId)
+   const { 
+      messages,
+      isLoading, 
+      error,
+      fetchNextPage,
+      hasNextPage,
+      isFetchingNextPage,
+      currentUser
+   } = useMessage(chatId)
+
    const scrollRef = useRef<HTMLDivElement>(null)
+   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
+   const [isFirstLoad, setIsFirstLoad] = useState(true)
+   const prevMessagesLengthRef = useRef(messages?.length || 0)
 
-   // Scroll to bottom when messages change or on load
+   // Handle initial load
    useEffect(() => {
-      if (scrollRef.current) {
-         scrollRef.current.scrollIntoView({ behavior: 'smooth' })
+      if (isLoading) {
+         setIsFirstLoad(true)
+      } else if (isFirstLoad && messages?.length) {
+         setIsFirstLoad(false)
+         scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight)
       }
-   }, [messages])
+   }, [isLoading, messages, isFirstLoad])
 
-   // Mark messages as read when user scrolls or views messages
+   // Handle new messages
    useEffect(() => {
-      const handleScroll = () => {
-         markMessagesAsRead();
-      };
+      const messagesLength = messages?.length || 0
+      
+      if (scrollRef.current && messagesLength > prevMessagesLengthRef.current) {
+         // If we're already near bottom or it's a new message, scroll to bottom
+         const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+         const isNearBottom = scrollHeight - scrollTop - clientHeight < 100
 
-      const scrollArea = scrollRef.current;
-      if (scrollArea) {
-         scrollArea.addEventListener('scroll', handleScroll);
-      }
-
-      return () => {
-         if (scrollArea) {
-            scrollArea.removeEventListener('scroll', handleScroll);
+         if (shouldScrollToBottom || isNearBottom) {
+            scrollRef.current.scrollTo({
+               top: scrollRef.current.scrollHeight,
+               behavior: 'smooth'
+            })
          }
-      };
-   }, [markMessagesAsRead]);
+      }
+      
+      prevMessagesLengthRef.current = messagesLength
+   }, [messages, shouldScrollToBottom])
 
-   if (isLoading) {
+   // Handle scroll events for pagination
+   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+      
+      // If scrolled near top, load more messages
+      if (scrollTop < 100 && hasNextPage && !isFetchingNextPage) {
+         const previousHeight = scrollHeight
+         fetchNextPage().then(() => {
+            // After loading more messages, maintain scroll position
+            if (scrollRef.current) {
+               const newHeight = scrollRef.current.scrollHeight
+               scrollRef.current.scrollTop = newHeight - previousHeight + scrollTop
+            }
+         })
+      }
+
+      // Enable auto-scroll when scrolled to bottom
+      const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 100
+      setShouldScrollToBottom(isAtBottom)
+   }
+
+   if (isLoading && isFirstLoad) {
       return (
          <div className="flex items-center justify-center h-full">
-            <p>Loading messages...</p>
+            <span className="loading loading-dots loading-lg"></span>
          </div>
       )
    }
 
    if (error) {
+      console.error('Error in MessageContainer:', error)
       return (
          <div className="flex items-center justify-center h-full">
-            <p className="text-red-500">{error}</p>
+            <p className="text-red-500">Error loading messages</p>
          </div>
       )
    }
 
-   if (!chatId) {
+   if (!chatId || !messages?.length) {
       return (
          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p>Select a chat to start messaging</p>
+            <p>No messages yet</p>
          </div>
       )
    }
 
    // Group messages by date and sender
-   const groupedMessages = messages?.reduce((groups: { date: string; messageGroups: MessageGroup[] }[], message) => {
-      const messageDate = new Date(message.createdAt)
-      let dateStr: string
+   const groupedMessages = messages.reduce((groups: ChatMessage[][], message) => {
+      const lastGroup = groups[groups.length - 1]
+      
+      if (!lastGroup) {
+         return [[message]]
+      }
 
-      if (isToday(messageDate)) {
-         dateStr = 'Today'
-      } else if (isYesterday(messageDate)) {
-         dateStr = 'Yesterday'
+      const lastMessage = lastGroup[lastGroup.length - 1]
+      const timeDiff = new Date(message.createdAt).getTime() - new Date(lastMessage.createdAt).getTime()
+      const sameUser = lastMessage.senderId === message.senderId
+      
+      // Group messages if they're from the same user and within 5 minutes
+      if (sameUser && timeDiff < 5 * 60 * 1000) {
+         lastGroup.push(message)
+         return groups
       } else {
-         dateStr = format(messageDate, 'MMMM d, yyyy')
+         return [...groups, [message]]
       }
-
-      // Find or create date group
-      let dateGroup = groups.find(g => g.date === dateStr)
-      if (!dateGroup) {
-         dateGroup = { date: dateStr, messageGroups: [] }
-         groups.push(dateGroup)
-      }
-
-      // Find or create message group within date group
-      let messageGroup = dateGroup.messageGroups.find(g => g.senderId === message.sender.userId)
-      if (!messageGroup) {
-         messageGroup = { senderId: message.sender.userId, messages: [] }
-         dateGroup.messageGroups.push(messageGroup)
-      }
-
-      // Add message to group if less than 2 minutes from last message
-      const lastMessage = messageGroup.messages[messageGroup.messages.length - 1]
-      if (!lastMessage || 
-          new Date(message.createdAt).getTime() - new Date(lastMessage.createdAt).getTime() <= 120000) {
-         messageGroup.messages.push(message)
-      } else {
-         // Create new group if more than 2 minutes gap
-         dateGroup.messageGroups.push({
-            senderId: message.sender.userId,
-            messages: [message]
-         })
-      }
-
-      return groups
-   }, []) || []
+   }, [])
 
    return (
-      <ScrollArea className="h-[calc(100vh-8.5rem)]">
-         <div className="flex flex-col p-4">
-            {groupedMessages.length > 0 ? (
-               groupedMessages.map((dateGroup) => (
-                  <div key={dateGroup.date}>
-                     <div className="flex justify-center my-4">
-                        <span className="px-3 py-1 text-xs text-muted-foreground bg-muted rounded-full">
-                           {dateGroup.date}
-                        </span>
-                     </div>
-                     {dateGroup.messageGroups.map((group, groupIndex) => (
-                        <div key={`${group.senderId}-${groupIndex}`} className="mb-2">
-                           {group.messages.map((message, messageIndex) => (
-                              <MessageBubble
-                                 key={message.messageId}
-                                 message={message}
-                                 isFirstInGroup={messageIndex === 0}
-                                 isLastInGroup={messageIndex === group.messages.length - 1}
-                                 users={message.reactions?.map(r => r.user) || []}
-                              />
-                           ))}
-                        </div>
-                     ))}
-                  </div>
-               ))
-            ) : (
-               <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <p>No messages yet</p>
-               </div>
-            )}
-            {/* Scroll anchor */}
-            <div ref={scrollRef} />
-         </div>
-      </ScrollArea>
+      <div 
+         ref={scrollRef}
+         className="flex-1 overflow-y-auto px-4 py-4 h-full"
+         onScroll={handleScroll}
+      >
+         {isFetchingNextPage && (
+            <div className="flex justify-center py-2">
+               <span className="loading loading-dots loading-md"></span>
+            </div>
+         )}
+         
+         {groupedMessages.map((group, groupIndex) => (
+            <div key={groupIndex} className="mb-4">
+               {group.map((message, messageIndex) => (
+                  <MessageBubble
+                     key={message.messageId}
+                     message={message}
+                     isFirstInGroup={messageIndex === 0}
+                     isLastInGroup={messageIndex === group.length - 1}
+                     currentUser={currentUser}
+                  />
+               ))}
+            </div>
+         ))}
+      </div>
    )
 }
 

@@ -32,8 +32,8 @@ function MessageActionPopover({ children, message }: Props) {
             {/*  Edit & Delete Message  */}
             <div className='flex items-center gap-1'>
                {message.isOwner && (
-                  <MessagEditDelete
-                     message={{ messageId: message.messageId, content: message.content }}
+                  <MessagEditDelete 
+                  message={{chatId: message.chatId, messageId: message.messageId, content: message.content }}
                   >
                      <button className='rounded-full bg-gray-200 p-1'>
                         <Ellipsis className='size-4' />
