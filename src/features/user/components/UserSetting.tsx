@@ -5,6 +5,7 @@ import { BookUser, LogOut, UserRound, Wrench } from 'lucide-react'
 import ContactList from './ContactList'
 import UpdateProfileForm from './UpdateProfileForm'
 import ChangePassword from './ChangePassword'
+import { getContacts } from '../services/UserService'
 
 interface Props {
    children: React.ReactNode
@@ -12,7 +13,7 @@ interface Props {
 
 function UserSetting({ children }: Props) {
    const { logout } = useAuth()
-
+   const contacts = getContacts()
    return (
       <Popover>
          <PopoverTrigger>{children}</PopoverTrigger>
@@ -26,7 +27,7 @@ function UserSetting({ children }: Props) {
             </UpdateProfileForm>
 
             {/*  Contacts  */}
-            <ContactList>
+            <ContactList contacts={contacts}>
                <button className='hover:bg-accent flex w-full items-center gap-2 rounded-md p-1'>
                   <BookUser className='size-4' />
                   <div>Contacts</div>

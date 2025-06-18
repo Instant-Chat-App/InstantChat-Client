@@ -45,6 +45,7 @@ interface Props {
 function MessagEditDelete({ message, children, currentUser}: Props) {
    const [isDialogOpen, setIsDialogOpen] = useState(false)
    const {deleteMessage, editMessage} = useMessage(message.chatId)
+   const isSender = message.sender.userId === currentUser.userId
    const form = useForm({
       resolver: zodResolver(editMessageSchema),
       defaultValues: {
@@ -68,12 +69,12 @@ function MessagEditDelete({ message, children, currentUser}: Props) {
       deleteMessage(message.messageId)
    }
 
-   if (message.sender.userId !== currentUser.userId) {
+   if (!isSender) {
       return null
    }
       
 
-   return (
+   return (isSender &&
       <Popover>
          <PopoverTrigger asChild>{children}</PopoverTrigger>
          <PopoverContent className='max-w-[150px] rounded-none p-0 font-normal'>

@@ -5,10 +5,10 @@ import { MoreVertical, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
+import { getContacts } from '@/features/user/services/UserService'
 
 function SideBar() {
    const [searchQuery, setSearchQuery] = useState('')
-
    return (
       <div className='group relative min-h-screen w-1/4 border'>
          <div className='border-border border-b p-4'>
