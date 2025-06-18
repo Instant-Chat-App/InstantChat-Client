@@ -38,36 +38,36 @@ function MessageListReaction({ reactions, children, messageId, chatId }: Props) 
                <AlertDialogDescription>
                   <ScrollArea className='h-70'>
                      {reactions.map((reaction) => (
-                        <div
-                           className='mb-2 flex items-center justify-between'
-                           key={`${reaction.messageId}-${reaction.userId}`}
-                           onClick={() => handleReactionClick(reaction.type)}
-                        >
-                           <div className='flex items-center gap-2'>
-                              {/* Avatar */}
-                              <div className='relative'>
-                                 <Avatar className='h-10 w-10'>
+                           <div
+                              className='mb-2 flex items-center justify-between'
+                              key={`${reaction.messageId}-${reaction.userId}`}
+                              onClick={() => handleReactionClick(reaction.type)}
+                           >
+                              <div className='flex items-center gap-2'>
+                                 {/* Avatar */}
+                                 <div className='relative'>
+                                    <Avatar className='h-10 w-10'>
                                     <AvatarImage src={reaction.user?.avatar} />
-                                    <AvatarFallback>
+                                       <AvatarFallback>
                                        {reaction.user?.fullName?.charAt(0) || '?'}
-                                    </AvatarFallback>
-                                 </Avatar>
-                              </div>
+                                       </AvatarFallback>
+                                    </Avatar>
+                                 </div>
 
-                              {/* User info */}
-                              <div className='flex flex-col'>
+                                 {/* User info */}
+                                 <div className='flex flex-col'>
                                  <div className='font-semibold'>{reaction.user?.fullName || 'Unknown User'}</div>
-                                 <div className='text-sm text-gray-500'>
-                                    {format(new Date(reaction.createdAt), 'MMM d, yyyy HH:mm')}
+                                    <div className='text-sm text-gray-500'>
+                                       {format(new Date(reaction.createdAt), 'MMM d, yyyy HH:mm')}
+                                    </div>
                                  </div>
                               </div>
-                           </div>
 
-                           {/* Emoji */}
-                           <div className='text-xl'>
-                              {REVERSE_REACTIONS_MAP[reaction.type as keyof typeof REVERSE_REACTIONS_MAP]}
+                              {/* Emoji */}
+                              <div className='text-xl'>
+                                 {REVERSE_REACTIONS_MAP[reaction.type as keyof typeof REVERSE_REACTIONS_MAP]}
+                              </div>
                            </div>
-                        </div>
                      ))}
                   </ScrollArea>
                </AlertDialogDescription>
