@@ -25,6 +25,7 @@ import * as React from 'react'
 import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
+import useChatMember from '../hooks/useChatMember'
 import useCurrentMemberChat from '../hooks/useCurrentMemberChat'
 import {
    CommunityDetailType,
@@ -42,8 +43,8 @@ function CommunityDetail({ detail, children }: Props) {
    const fileInputRef = useRef<HTMLInputElement>(null)
    const [searchParams] = useSearchParams()
    const chatId = searchParams.get('id')
-   const isOwner = true
    const { currentMemberChat } = useCurrentMemberChat(Number(chatId))
+   const { chatMembers } = useChatMember(Number(chatId))
 
    const form = useForm<UpdateCommunityFormData>({
       resolver: zodResolver(updateCommunityFormSchema),
@@ -153,7 +154,11 @@ function CommunityDetail({ detail, children }: Props) {
                      />
 
                      {/*  List Members  */}
-                     <MemberList isOwner={isOwner} detail={detail} />
+                     <MemberList
+                        currentUserId={currentMemberChat?.memberId || -100}
+                        isOwner={currentMemberChat?.isOwner || false}
+                        members={chatMembers || []}
+                     />
                   </form>
                </Form>
             </div>

@@ -1,17 +1,16 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Crown, Trash, UserPlus, UsersRound } from 'lucide-react'
-import { CommunityDetailType } from '../types/Community'
+import { Trash, UserPlus, UsersRound } from 'lucide-react'
+import { ChatMember } from '../types/Member'
 
 interface Props {
-   detail: CommunityDetailType
+   members: ChatMember[]
    isOwner: boolean
+   currentUserId: number
 }
 
-function MemberList({ detail, isOwner }: Props) {
-   const currentUserId = 3 // Replace with actual user ID from context or state
-
+function MemberList({ members, isOwner, currentUserId }: Props) {
    return (
       <div>
          {isOwner ? (
@@ -23,42 +22,36 @@ function MemberList({ detail, isOwner }: Props) {
                <UsersRound className='size-4' /> <div>Members</div>
             </div>
          )}
-         <ScrollArea className='max-h-[200px] w-full'>
-            {detail.members.length > 0 ? (
+         <ScrollArea className='max-h-[400px] w-full pt-2'>
+            {members.length > 0 ? (
                <div className='flex flex-col gap-2'>
-                  {detail.members.map((member) => (
-                     <div className='flex items-center justify-between hover:bg-gray-100'>
-                        <div
-                           key={member.memberId}
-                           className='flex items-center gap-3 rounded-lg p-2'
-                        >
-                           <Avatar className='h-8 w-8'>
-                              <AvatarImage src={member.memberAvatar || '/placeholder.svg'} />
-                              <AvatarFallback>
-                                 {member.memberName.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                           </Avatar>
-                           <span>{member.memberName}</span>
+                  {members
+                     .filter((member) => member.userId !== currentUserId)
+                     .map((member) => (
+                        <div className='flex items-center justify-between hover:bg-gray-100'>
+                           <div
+                              key={member.userId}
+                              className='flex items-center gap-3 rounded-lg p-2'
+                           >
+                              <Avatar className='h-8 w-8'>
+                                 <AvatarImage src={member.avatar || '/placeholder.svg'} />
+                                 <AvatarFallback>
+                                    {member.fullName.charAt(0).toUpperCase()}
+                                 </AvatarFallback>
+                              </Avatar>
+                              <span>{member.fullName}</span>
+                           </div>
+                           {isOwner && (
+                              <Button
+                                 variant='ghost'
+                                 size='icon'
+                                 className='h-8 w-8 rounded-full'
+                              >
+                                 <Trash className='size-4 fill-red-500 text-red-500' />
+                              </Button>
+                           )}
                         </div>
-                        {isOwner ? (
-                           <Button
-                              variant='ghost'
-                              size='icon'
-                              className='h-8 w-8 rounded-full'
-                           >
-                              <Trash className='size-4 fill-red-500 text-red-500' />
-                           </Button>
-                        ) : (
-                           <Button
-                              variant='ghost'
-                              size='icon'
-                              className='h-8 w-8 rounded-full'
-                           >
-                              <Crown className='size-4 fill-amber-400 text-amber-400' />
-                           </Button>
-                        )}
-                     </div>
-                  ))}
+                     ))}
                </div>
             ) : (
                <div className='text-muted-foreground text-center text-sm'>
