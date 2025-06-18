@@ -3,8 +3,9 @@ import { useCallback, useMemo, useState } from "react"
 import { getChatMessages } from "../services/ChatService"
 import { getSocket } from "@/socket/socket-io"
 import { useEffect } from "react"
-import { ChatMessage, Reaction } from "../types/Chat"
+import { ChatMessage, Reaction, User } from "../types/Chat"
 import { getCurrentUser } from "@/features/auth/services/AuthService"
+import { UserInfo } from "@/features/user/types/User"
 
 interface FileAttachment {
     fileName: string;
@@ -77,17 +78,69 @@ function useMessage(chatId: number | null) {
     const sendMessage = useCallback(
         (content: string, attachments?: FileAttachment[], replyTo?: number) => {
             const socket = getSocket();
-            if (!socket || !chatId) return;
+            if (!socket || !chatId) {
+                setError("Socket connection not available");
+                return;
+            }
 
+            // Validate message content and attachments
+            if (!content && (!attachments || attachments.length === 0)) {
+                setError("Message content cannot be empty");
+                return;
+            }
+
+            // Send message through socket first
             socket.emit("sendMessage", {
                 chatId,
                 content,
                 attachments,
                 replyTo,
             });
+
+            // Optimistic update
+            queryClient.setQueryData<InfiniteData<PaginatedMessages>>(['messages', chatId], (oldData) => {
+                if (!oldData) return oldData;
+
+                const optimisticMessage: ChatMessage = {
+                    messageId: Date.now(), // Temporary ID
+                    chatId: chatId,
+                    content: content,
+                    senderId: currentUser?.id || 0,
+                    createdAt: new Date().toISOString(),
+                    isEdited: false,
+                    isDeleted: false,
+                    replyTo: replyTo || null,
+                    replyToMessage: null,
+                    attachments: attachments ? attachments.map(att => ({
+                        url: URL.createObjectURL(new Blob([att.base64Data], { type: att.mimeType })),
+                        type: determineAttachmentType(att.mimeType),
+                        name: att.fileName
+                    })) : [],
+                    reactions: [],
+                    messageStatus: [],
+                    sender: currentUser as any,
+                    isOwner: true
+                };
+
+                const newPages = [...oldData.pages];
+                const lastPage = newPages[newPages.length - 1];
+                lastPage.data = [...lastPage.data, optimisticMessage];
+
+                return {
+                    ...oldData,
+                    pages: newPages
+                };
+            });
         },
-        [chatId]
+        [chatId, currentUser, queryClient, setError]
     );
+
+    // Helper function to determine attachment type
+    const determineAttachmentType = (mimeType: string): 'IMAGE' | 'VIDEO' | 'RAW' => {
+        if (mimeType.startsWith('image/')) return 'IMAGE';
+        if (mimeType.startsWith('video/')) return 'VIDEO';
+        return 'RAW';
+    };
 
     const deleteMessage = useCallback((messageId: number) => {
         const socket = getSocket();
@@ -126,9 +179,123 @@ function useMessage(chatId: number | null) {
         if (!socket || !chatId) return;
 
         // Handle message events
-        socket.on("newMessage", (payload: { chatId: number }) => {
+        socket.on("newMessage", (payload: {
+            messageId: number,
+            chatId: number,
+            content: string,
+            attachments: any[],
+            senderId: number,
+            timestamp: string,
+            replyTo?: number | null,
+            isEdited: boolean,
+            isDeleted: boolean,
+            sender?: User | null
+        }) => {
+            if (payload.chatId === chatId) {
+                queryClient.setQueryData<InfiniteData<PaginatedMessages>>(['messages', chatId], (oldData) => {
+                    if (!oldData) return oldData;
+
+                    const newPages = oldData.pages.map(page => {
+                        const pageData = [...page.data];
+                        
+                        // If this is our own message, update the optimistic entry
+                        if (payload.senderId === currentUser?.id) {
+                            const optimisticIndex = pageData.findIndex(
+                                msg => msg.content === payload.content && 
+                                      msg.senderId === payload.senderId &&
+                                      !msg.messageId
+                            );
+                            
+                            if (optimisticIndex !== -1) {
+                                pageData[optimisticIndex] = {
+                                    ...pageData[optimisticIndex],
+                                    messageId: payload.messageId,
+                                    chatId: payload.chatId,
+                                    content: payload.content,
+                                    senderId: payload.senderId,
+                                    createdAt: payload.timestamp,
+                                    isEdited: payload.isEdited,
+                                    isDeleted: payload.isDeleted,
+                                    replyTo: payload.replyTo || null,
+                                    attachments: payload.attachments || [],
+                                    sender: payload.sender || {
+                                        userId: currentUser.id,
+                                        fullName: currentUser.fullName,
+                                        email: currentUser.email,
+                                        avatar: currentUser.avatar || '',
+                                        dob: currentUser.dob.toISOString(),
+                                        gender: currentUser.gender,
+                                        bio: currentUser.bio
+                                    }
+                                };
+                            }
+                        } else {
+                            // For messages from others, add to the end of the last page
+                            const newMessage: ChatMessage = {
+                                messageId: payload.messageId,
+                                chatId: payload.chatId,
+                                content: payload.content,
+                                senderId: payload.senderId,
+                                createdAt: payload.timestamp,
+                                isEdited: payload.isEdited,
+                                isDeleted: payload.isDeleted,
+                                replyTo: payload.replyTo || null,
+                                replyToMessage: null,
+                                attachments: payload.attachments || [],
+                                reactions: [],
+                                messageStatus: [],
+                                sender: payload.sender || {
+                                    userId: payload.senderId,
+                                    fullName: '',
+                                    email: '',
+                                    avatar: '',
+                                    dob: '',
+                                    gender: 'MALE',
+                                    bio: ''
+                                },
+                                isOwner: false
+                            };
+                            pageData.push(newMessage);
+                        }
+                        
+                        return {
+                            ...page,
+                            data: pageData.sort((a, b) => 
+                                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                            )
+                        };
+                    });
+
+                    return {
+                        ...oldData,
+                        pages: newPages
+                    };
+                });
+
+                // Invalidate queries to ensure we get the latest data on next fetch
                 queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+            }
+        });
+
+        // Handle error in sending message
+        socket.on("messageError", (error: { error: string }) => {
+            console.error("Error sending message:", error);
+            setError(error.error);
             
+            // Remove the optimistic update on error
+            queryClient.setQueryData<InfiniteData<PaginatedMessages>>(['messages', chatId], (oldData) => {
+                if (!oldData) return oldData;
+
+                const newPages = oldData.pages.map(page => ({
+                    ...page,
+                    data: page.data.filter(msg => msg.messageId !== undefined)
+                }));
+
+                return {
+                    ...oldData,
+                    pages: newPages
+                };
+            });
         });
 
         // Handle delete message events
@@ -219,6 +386,7 @@ function useMessage(chatId: number | null) {
 
         return () => {
             socket.off("newMessage");
+            socket.off("messageError");
             socket.off("deleteSuccess");
             socket.off("messageDeleted");
             socket.off("deleteError");
@@ -231,7 +399,7 @@ function useMessage(chatId: number | null) {
             socket.off("readSuccess");
             socket.off("readError");
         };
-    }, [chatId, queryClient]);
+    }, [chatId, queryClient, currentUser]);
 
     return {
         messages: processedMessages,

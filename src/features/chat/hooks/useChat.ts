@@ -22,7 +22,7 @@ function useChat() {
     } = useQuery<Chat[]>({
         queryKey: ['chats'],
         queryFn:  getUserChats,
-        staleTime: 1000* 15,
+        staleTime: 1000* 60,
     })
 
     // Sort chats by most recent message
