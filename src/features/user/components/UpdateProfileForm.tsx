@@ -62,12 +62,7 @@ function UpdateProfileForm({ children }: Props) {
    const form = useForm<UpdateProfileFormValues>({
       resolver: zodResolver(updateProfileSchema),
       defaultValues: {
-         fullName: '',
-         phone: '',
-         email: '',
-         dob: '',
-         gender: 'MALE',
-         bio: ''
+         ...(userProfile && {})
       }
    })
 

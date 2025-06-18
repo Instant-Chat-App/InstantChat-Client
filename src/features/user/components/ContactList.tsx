@@ -5,28 +5,26 @@ import {
    DialogTitle,
    DialogTrigger
 } from '@/components/ui/dialog'
+import { UserContact } from '../types/User'
 
 const contacts: UserContact[] = [
    {
       contactId: 1,
       fullName: 'Nguyen Kha',
       avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      phone: '+84 912 345 678',
-      isContact: true
+      phone: '+84 912 345 678'
    },
    {
       contactId: 2,
       fullName: 'Linh Tran',
       avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-      phone: '+84 936 123 456',
-      isContact: false
+      phone: '+84 936 123 456'
    },
    {
       contactId: 3,
       fullName: 'Bao Pham',
       avatar: 'https://randomuser.me/api/portraits/men/21.jpg',
-      phone: '+84 983 654 321',
-      isContact: true
+      phone: '+84 983 654 321'
    }
 ]
 

@@ -4,7 +4,8 @@ export const communityFormSchema = z.object({
    chatName: z.string().trim().min(1, 'Không được để trống'),
    description: z.string().optional(),
    coverImage: z.string().optional(),
-   type: z.string().optional()
+   type: z.string(),
+   members: z.array(z.number())
 })
 export type CommunityFormData = z.infer<typeof communityFormSchema>
 

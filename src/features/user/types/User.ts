@@ -7,13 +7,14 @@ export interface UserInfo {
    gender: 'MALE' | 'FEMALE'
    avatar: string
    bio: string
+   isContact?: boolean
 }
+
 export interface UserContact {
    contactId: number
    fullName: string
    avatar: string
    phone: string
-   isContact: boolean
 }
 
 export interface UpdateProfileData {

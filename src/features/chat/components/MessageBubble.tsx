@@ -96,6 +96,7 @@ function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, c
                      {reactions && reactions.length > 0 && (
                         <MessageListReaction
                            reactions={reactions}
+                           users={users}
                            messageId={messageId}
                            chatId={message.chatId}
                         >
@@ -129,7 +130,7 @@ function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, c
                               isOwner ? 'text-white/70' : 'text-gray-500'
                            )}
                         >
-                           {format(new Date(message.createdAt), 'HH:mm')}
+                           {format(new Date(createdAt), 'HH:mm')}
                         </div>
                      )}
                   </div>
