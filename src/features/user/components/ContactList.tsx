@@ -1,4 +1,3 @@
-import ConfirmForm from '@/components/custom/ConfirmForm'
 import {
    Dialog,
    DialogContent,
@@ -6,153 +5,156 @@ import {
    DialogTitle,
    DialogTrigger
 } from '@/components/ui/dialog'
+import { UserInfo } from '../types/User'
+import useUser from '../hooks/useUser'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Plus, Trash } from 'lucide-react'
-import * as React from 'react'
-import { useEffect } from 'react'
-import useUser, { useAddContact, useDeleteContact } from '../hooks/useUser'
-import { findUserByPhone } from '../services/UserService'
+import { Search, Plus, Trash2, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface Props {
    children: React.ReactNode
 }
 
 function ContactList({ children }: Props) {
-   const { userContacts } = useUser()
-   const [search, setSearch] = React.useState('')
-   const [searchResult, setSearchResult] = React.useState<any>(null)
-   const [searchLoading, setSearchLoading] = React.useState(false)
-   const { mutate: addContact, ...addContactResult } = useAddContact()
-   const { mutate: deleteContact, ...deleteContactResult } = useDeleteContact()
-   const debounceRef = React.useRef<NodeJS.Timeout | null>(null)
+   const { 
+      userContacts, 
+      isLoading,
+      findUserByPhoneMutation,
+      addContactMutation,
+      deleteContactMutation
+   } = useUser();
 
-   useEffect(() => {
-      if (!search) {
-         setSearchLoading(false)
-         setSearchResult(null)
-         return
+   const [searchPhone, setSearchPhone] = useState('');
+   const [searchResult, setSearchResult] = useState<UserInfo | null>(null);
+
+   const handleSearch = async () => {
+      if (!searchPhone.trim()) {
+         toast.error('Vui lòng nhập số điện thoại');
+         return;
       }
-      setSearchLoading(true)
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      debounceRef.current = setTimeout(async () => {
-         try {
-            const res = await findUserByPhone(search)
-            setSearchResult(res.data)
-         } catch (err) {
-            setSearchResult(null)
+
+      try {
+         const response = await findUserByPhoneMutation.mutateAsync(searchPhone);
+         if (response.success && response.data) {
+            setSearchResult(response.data);
          }
-         setSearchLoading(false)
-      }, 1000)
-      // Cleanup
-      return () => {
-         if (debounceRef.current) clearTimeout(debounceRef.current)
+      } catch (error) {
+         setSearchResult(null);
       }
-   }, [search])
+   };
 
-   // Height for 4 contacts (each ~64px + gap)
-   const contactHeight = 68 // px (item height + margin)
-   const maxVisibleContacts = 4
-   const scrollAreaHeight =
-      Math.min(userContacts?.length || 0, maxVisibleContacts) * contactHeight ||
-      contactHeight * maxVisibleContacts
+   const handleAddContact = async (userId: number) => {
+      await addContactMutation.mutateAsync(userId);
+      setSearchResult(null);
+      setSearchPhone('');
+   };
+
+   const handleDeleteContact = async (userId: number) => {
+      await deleteContactMutation.mutateAsync(userId);
+   };
 
    return (
       <Dialog>
          <DialogTrigger>{children}</DialogTrigger>
-         <DialogContent className='w-[420px] max-w-full'>
+         <DialogContent className="max-w-md">
             <DialogHeader>
                <DialogTitle>Contacts</DialogTitle>
             </DialogHeader>
-            <div className='mb-4'>
+
+            {/* Search Section */}
+            <div className="flex gap-2 mb-4">
                <Input
-                  placeholder='Search by phone...'
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className='flex-1 px-3 py-2 text-black'
+                  placeholder="Nhập số điện thoại..."
+                  value={searchPhone}
+                  onChange={(e) => setSearchPhone(e.target.value)}
                />
-            </div>
-            {searchLoading && <div className='text-center text-gray-500'>Searching...</div>}
-            {searchResult && (
-               <div className='mb-2 flex items-center gap-2 rounded-md border bg-gray-50 p-3'>
-                  <img
-                     src={searchResult.avatar || 'https://via.placeholder.com/40'}
-                     alt={searchResult.fullName}
-                     className='h-12 w-12 rounded-full object-cover'
-                  />
-                  <div className='flex flex-1 flex-col'>
-                     <span className='font-semibold text-black'>{searchResult.fullName}</span>
-                     <span className='text-muted-foreground text-sm'>
-                        {searchResult.phone}
-                     </span>
-                  </div>
-                  {userContacts && userContacts.some((c: any) => c.id === searchResult.id) ? (
-                     <ConfirmForm
-                        title='Delete Contact'
-                        description={`Delete ${searchResult.fullName} from your contacts?`}
-                        onConfirm={() => deleteContact(searchResult.id)}
-                     >
-                        <button disabled={deleteContactResult.isPending}>
-                           <Trash className='size-5 text-red-500' />
-                        </button>
-                     </ConfirmForm>
+               <Button 
+                  onClick={handleSearch}
+                  disabled={findUserByPhoneMutation.isPending}
+               >
+                  {findUserByPhoneMutation.isPending ? (
+                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                     <ConfirmForm
-                        title='Add Contact'
-                        description={`Add ${searchResult.fullName} to your contacts?`}
-                        onConfirm={() => addContact(searchResult.id)}
-                     >
-                        <button disabled={addContactResult.isPending}>
-                           <Plus className='text-green-500' />
-                        </button>
-                     </ConfirmForm>
+                     <Search className="h-4 w-4" />
                   )}
+               </Button>
+            </div>
+
+            {/* Search Result */}
+            {searchResult && (
+               <div className="border rounded-lg p-3 mb-4">
+                  <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-2">
+                        <img
+                           src={searchResult.avatar || 'https://via.placeholder.com/40'}
+                           alt={searchResult.fullName}
+                           className="h-10 w-10 rounded-full"
+                        />
+                        <div className="flex flex-col">
+                           <span className="font-semibold">{searchResult.fullName}</span>
+                           <span className="text-muted-foreground text-sm">{searchResult.phone}</span>
+                        </div>
+                     </div>
+                     <Button
+                        size="sm"
+                        onClick={() => handleAddContact(searchResult.id)}
+                        disabled={addContactMutation.isPending}
+                     >
+                        {addContactMutation.isPending ? (
+                           <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                           <Plus className="h-4 w-4" />
+                        )}
+                     </Button>
+                  </div>
                </div>
             )}
-            <div className='mt-4'>
-               <div className='mb-2 font-semibold text-black'>Your Contacts</div>
-               <ScrollArea
-                  style={{
-                     height: scrollAreaHeight,
-                     maxHeight: contactHeight * maxVisibleContacts
-                  }}
-                  className='w-full pr-2'
-               >
-                  {userContacts && userContacts.length > 0 ? (
-                     userContacts.map((contact: any) => (
-                        <div
-                           key={contact.id}
-                           className='hover:bg-accent mb-1 flex items-center gap-3 rounded-md p-3 transition-all duration-150'
-                           style={{ minHeight: 56 }}
-                        >
+
+            {/* Contact List */}
+            <div className="space-y-2">
+               {isLoading ? (
+                  <div className="flex items-center justify-center p-4">
+                     <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+               ) : userContacts && userContacts.length > 0 ? (
+                  userContacts.map((contact) => (
+                     <div
+                        key={contact.id}
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-accent"
+                     >
+                        <div className="flex items-center gap-2">
                            <img
                               src={contact.avatar || 'https://via.placeholder.com/40'}
                               alt={contact.fullName}
-                              className='h-12 w-12 rounded-full object-cover'
+                              className="h-10 w-10 rounded-full"
                            />
-                           <div className='flex flex-1 flex-col'>
-                              <span className='font-semibold text-black'>
-                                 {contact.fullName}
-                              </span>
-                              <span className='text-muted-foreground text-sm'>
-                                 {contact.phone}
-                              </span>
+                           <div className="flex flex-col">
+                              <span className="font-semibold">{contact.fullName}</span>
+                              <span className="text-muted-foreground text-sm">{contact.phone}</span>
                            </div>
-                           <ConfirmForm
-                              title='Delete Contact'
-                              description={`Delete ${contact.fullName} from your contacts?`}
-                              onConfirm={() => deleteContact(contact.id)}
-                           >
-                              <button disabled={deleteContactResult.isPending}>
-                                 <Trash className='size-5 text-red-500' />
-                              </button>
-                           </ConfirmForm>
                         </div>
-                     ))
-                  ) : (
-                     <div className='text-center text-gray-500'>No contacts found.</div>
-                  )}
-               </ScrollArea>
+                        <Button
+                           variant="ghost"
+                           size="icon"
+                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                           onClick={() => handleDeleteContact(contact.id)}
+                           disabled={deleteContactMutation.isPending}
+                        >
+                           {deleteContactMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                           ) : (
+                              <Trash2 className="h-4 w-4" />
+                           )}
+                        </Button>
+                     </div>
+                  ))
+               ) : (
+                  <div className="flex items-center justify-center p-4 text-muted-foreground">
+                     No contacts found
+                  </div>
+               )}
             </div>
          </DialogContent>
       </Dialog>

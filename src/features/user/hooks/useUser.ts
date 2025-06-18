@@ -1,20 +1,16 @@
 import { getCurrentUser } from '@/features/auth/services/AuthService'
-import {
-   useMutation,
-   UseMutationResult,
-   useQuery,
-   useQueryClient
-} from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
    addContact,
    changePassword,
    deleteContact,
+   findUserByPhone,
    getUserContacts,
    updateProfile,
    uploadAvatar
 } from '../services/UserService'
-import { ChangePasswordData, UpdateProfileData } from '../types/User'
+import { ChangePasswordData, UpdateProfileData, UserInfo } from '../types/User'
 
 const useUser = () => {
    const queryClient = useQueryClient()
@@ -99,6 +95,53 @@ const useUser = () => {
       }
    })
 
+   const findUserByPhoneMutation = useMutation({
+      mutationFn: findUserByPhone,
+      onError: (error: any) => {
+         toast.error('Không tìm thấy người dùng', {
+            description: error.response?.data?.message || 'Số điện thoại không tồn tại'
+         })
+      }
+   })
+
+   const addContactMutation = useMutation({
+      mutationFn: addContact,
+      onSuccess: (response) => {
+         if (response.success) {
+            toast.success('Thêm liên hệ thành công')
+            queryClient.invalidateQueries({ queryKey: ['userContacts'] })
+         } else {
+            toast.error('Thêm liên hệ thất bại', {
+               description: response.message
+            })
+         }
+      },
+      onError: (error: any) => {
+         toast.error('Thêm liên hệ thất bại', {
+            description: error.response?.data?.message || 'Đã xảy ra lỗi khi thêm liên hệ'
+         })
+      }
+   })
+
+   const deleteContactMutation = useMutation({
+      mutationFn: deleteContact,
+      onSuccess: (response) => {
+         if (response.success) {
+            toast.success('Xóa liên hệ thành công')
+            queryClient.invalidateQueries({ queryKey: ['userContacts'] })
+         } else {
+            toast.error('Xóa liên hệ thất bại', {
+               description: response.message
+            })
+         }
+      },
+      onError: (error: any) => {
+         toast.error('Xóa liên hệ thất bại', {
+            description: error.response?.data?.message || 'Đã xảy ra lỗi khi xóa liên hệ'
+         })
+      }
+   })
+
    return {
       userProfile,
       isLoading,
@@ -106,28 +149,11 @@ const useUser = () => {
       updateProfileMutation,
       uploadAvatarMutation,
       changePasswordMutation,
-      userContacts
+      userContacts,
+      findUserByPhoneMutation,
+      addContactMutation,
+      deleteContactMutation
    }
-}
-
-export function useAddContact(): UseMutationResult<any, Error, number> {
-   const queryClient = useQueryClient()
-   return useMutation({
-      mutationFn: (userId: number) => addContact(userId),
-      onSuccess: () => {
-         queryClient.invalidateQueries({ queryKey: ['userContacts'] })
-      }
-   })
-}
-
-export function useDeleteContact(): UseMutationResult<any, Error, number> {
-   const queryClient = useQueryClient()
-   return useMutation({
-      mutationFn: (userId: number) => deleteContact(userId),
-      onSuccess: () => {
-         queryClient.invalidateQueries({ queryKey: ['userContacts'] })
-      }
-   })
 }
 
 export default useUser
