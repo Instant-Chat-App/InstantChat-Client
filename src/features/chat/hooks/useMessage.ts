@@ -89,14 +89,11 @@ function useMessage(chatId: number | null) {
         [chatId]
     );
 
-    const deleteMessage = useCallback(
-        (messageId: number) => {
-            const socket = getSocket();
-            if (!socket || !chatId) return;
-            socket.emit("deleteMessage", { chatId, messageId });
-        },
-        [chatId]
-    );
+    const deleteMessage = useCallback((messageId: number) => {
+        const socket = getSocket();
+        if (!socket || !chatId) return;
+        socket.emit("deleteMessage", chatId, messageId);
+    }, [chatId]);
 
     const editMessage = useCallback(
         (messageId: number, content: string) => {
@@ -128,15 +125,55 @@ function useMessage(chatId: number | null) {
         const socket = getSocket();
         if (!socket || !chatId) return;
 
-        const handleMessageEvent = (payload: { chatId: number }) => {
+        // Handle message events
+        socket.on("newMessage", (payload: { chatId: number }) => {
             if (payload.chatId === chatId) {
                 queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
             }
-        };
+        });
 
-        // Message events
-        socket.on("newMessage", handleMessageEvent);
-        socket.on("deleteMessage", handleMessageEvent);
+        // Handle delete message events
+        socket.on("deleteSuccess", (payload: { messageId: number }) => {
+            queryClient.setQueryData<InfiniteData<PaginatedMessages>>(['messages', chatId], (oldData) => {
+                if (!oldData) return oldData;
+                const newPages = oldData.pages.map(page => ({
+                    ...page,
+                    data: page.data.map(msg => 
+                        msg.messageId === payload.messageId 
+                            ? { ...msg, isDeleted: true, content: 'This message has been deleted' }
+                            : msg
+                    )
+                }));
+                return {
+                    ...oldData,
+                    pages: newPages
+                };
+            });
+            setError(null);
+        });
+
+        socket.on("messageDeleted", (payload: { messageId: number }) => {
+            queryClient.setQueryData<InfiniteData<PaginatedMessages>>(['messages', chatId], (oldData) => {
+                if (!oldData) return oldData;
+                const newPages = oldData.pages.map(page => ({
+                    ...page,
+                    data: page.data.map(msg => 
+                        msg.messageId === payload.messageId 
+                            ? { ...msg, isDeleted: true, content: 'This message has been deleted' }
+                            : msg
+                    )
+                }));
+                return {
+                    ...oldData,
+                    pages: newPages
+                };
+            });
+        });
+
+        socket.on("deleteError", (payload: { error: string }) => {
+            console.error("Delete message error:", payload.error);
+            setError(payload.error);
+        });
 
         // Handle edit message events
         socket.on("editSuccess", (payload: { messageId: number, content: string }) => {
@@ -182,8 +219,10 @@ function useMessage(chatId: number | null) {
         });
 
         return () => {
-            socket.off("newMessage", handleMessageEvent);
-            socket.off("deleteMessage", handleMessageEvent);
+            socket.off("newMessage");
+            socket.off("deleteSuccess");
+            socket.off("messageDeleted");
+            socket.off("deleteError");
             socket.off("editSuccess");
             socket.off("messageEdited");
             socket.off("editError");

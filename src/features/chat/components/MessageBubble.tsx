@@ -17,9 +17,10 @@ interface Props {
 }
 
 function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, currentUser}: Props) {
-   const { messageId, content, sender, attachments, reactions} = message
-   const hasContent = content && content.trim().length > 0
-   const isOwner = currentUser.id === message.senderId
+   const { messageId, content, sender, attachments, reactions, senderId} = message
+   const hasContent = content.trim().length > 0 ? content : false
+   const isOwner = currentUser?.id === message.senderId
+
 
 
    return (
@@ -46,7 +47,7 @@ function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, c
             <div className='h-8 w-8 flex-shrink-0' />
          )}
 
-         <MessageActionPopover message={message}>
+         <MessageActionPopover message={message} currentUser={currentUser}>
             <div className={cn(
                'flex flex-col',
                isOwner ? 'items-end' : 'items-start',
@@ -65,7 +66,7 @@ function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, c
                )}
 
                {/* Message content - Only show if not empty */}
-               {hasContent && (
+               {(
                   <div
                      className={cn(
                         'px-4 py-2 break-words',
@@ -89,8 +90,8 @@ function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, c
                         )
                      )}
                   >
-                     <p className='text-sm whitespace-pre-wrap'>{content}</p>
-
+                     {hasContent && <p className='text-sm whitespace-pre-wrap'>{content}</p>}
+                     {!hasContent && <p className='text-sm italic text-black whitespace-pre-wrap '>This message has been deleted by the sender.</p>}
                      {/* Reactions */}
                      {reactions && reactions.length > 0 && (
                         <MessageListReaction
@@ -107,7 +108,7 @@ function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, c
                                        return (
                                           <div
                                              key={type}
-                                             className='flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs'
+                                             className='flex items-center gap-1 rounded-full bg-gray-400 px-2 py-0.5 text-xs'
                                           >
                                              <span>{reactionConfig.emoji}</span>
                                              <span>{count}</span>

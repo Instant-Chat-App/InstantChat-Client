@@ -8,6 +8,7 @@ import MessageReactionBar from './MessageReactionBar'
 interface Props {
    children: React.ReactNode
    message: ChatMessage
+   currentUser?: any
 }
 
 function MessageActionPopover({ children, message }: Props) {
@@ -32,8 +33,14 @@ function MessageActionPopover({ children, message }: Props) {
             {/*  Edit & Delete Message  */}
             <div className='flex items-center gap-1'>
                {message.isOwner && (
-                  <MessagEditDelete 
-                  message={{chatId: message.chatId, messageId: message.messageId, content: message.content }}
+                  <MessagEditDelete
+                     message={{
+                        chatId: message.chatId,
+                        messageId: message.messageId,
+                        content: message.content,
+                        sender: message.sender
+                     }}
+                     currentUser={message.sender}
                   >
                      <button className='rounded-full bg-gray-200 p-1'>
                         <Ellipsis className='size-4' />

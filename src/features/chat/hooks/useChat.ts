@@ -40,45 +40,20 @@ function useChat() {
         }
     }, [chats])
 
-    // const memberJoined = useCallback((userId: number[]) => {
-    //     const socket = getSocket()
-    //     if (!socket) return;
-    //     socket.emit("memberJoined", { chats, userId })
-    // }, [chats])
-
-    // const memberLeft = useCallback((chatId: number, userId: number) => {
-    //     const socket = getSocket()
-    //     if (!socket) return;
-    //     socket.emit("memberLeft", { chatId, userId })
-    // }, [chats]);
-
-    
-
-    // const changeGroupName = useCallback((newName: string) => {
-    //     const socket = getSocket()
-    //     if (!socket) return;
-    //     socket.emit("changeGroupName", { chatId, newName })
-    // }, [chats])
-
-    // const changeGroupCover = useCallback((newCover: FileAttachment) => {
-    //     const socket = getSocket()
-    //     if (!socket) return;
-    //     socket.emit("changeGroupCover", { chatId, newCover })
-    // }, [chats])
-
     // Listen to all chat events regardless of current active chat
     useEffect(() => {
         const socket = getSocket();
         if (!socket) return;
 
         const handleChatUpdate = () => {
-            // Invalidate and refetch chats when any chat is updated
             queryClient.invalidateQueries({ queryKey: ['chats'] });
         };
 
+        
+
         // Listen for any message events in any chat
         socket.on("newMessage", handleChatUpdate);
-        socket.on("messageEdited", handleChatUpdate);
+
         socket.on("messageDeleted", handleChatUpdate);
         socket.on("messageReacted", handleChatUpdate);
         socket.on("reactionDeleted", handleChatUpdate);

@@ -19,6 +19,8 @@ import { useForm } from 'react-hook-form'
 import z from 'zod'
 import useMessage from '../hooks/useMessage'
 import { useState } from 'react'
+import { User } from '../types/Chat'
+import { debug } from 'console'
 
 
 const editMessageSchema = z.object({
@@ -31,10 +33,16 @@ interface Props {
       chatId: number
       messageId: number
       content: string
+      sender: {
+         userId: number
+         avatar: string
+         fullName: string
+      }
    }
+   currentUser: User
 }
 
-function MessagEditDelete({ message, children}: Props) {
+function MessagEditDelete({ message, children, currentUser}: Props) {
    const [isDialogOpen, setIsDialogOpen] = useState(false)
    const {deleteMessage, editMessage} = useMessage(message.chatId)
    const form = useForm({
@@ -50,14 +58,20 @@ function MessagEditDelete({ message, children}: Props) {
          form.setError('content', { message: 'Tin nhắn không được để trống' })
          return
       }
+      console.log(currentUser, message.sender)
       editMessage(message.messageId, content)
       setIsDialogOpen(false) // Close dialog after edit
       form.reset() // Reset form
    }
 
-   const handleDelete = (): void => {
+   const handleDelete = () => {
       deleteMessage(message.messageId)
    }
+
+   if (message.sender.userId !== currentUser.userId) {
+      return null
+   }
+      
 
    return (
       <Popover>
