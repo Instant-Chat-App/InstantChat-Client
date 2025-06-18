@@ -18,7 +18,8 @@ interface Props {
 
 function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, currentUser}: Props) {
    const { messageId, content, sender, attachments, reactions, senderId} = message
-   const hasContent = content.trim().length > 0 ? content : false
+   const hasContent = content? content.trim().length > 0 : false
+   const isDeleted = message.isDeleted
    const isOwner = currentUser?.id === message.senderId
 
 
@@ -91,7 +92,7 @@ function MessageBubble({ message, isFirstInGroup = true, isLastInGroup = true, c
                      )}
                   >
                      {hasContent && <p className='text-sm whitespace-pre-wrap'>{content}</p>}
-                     {!hasContent && <p className='text-sm italic text-black whitespace-pre-wrap '>This message has been deleted by the sender.</p>}
+                     {isDeleted && <p className='text-sm italic text-black whitespace-pre-wrap '>This message has been deleted by the sender.</p>}
                      {/* Reactions */}
                      {reactions && reactions.length > 0 && (
                         <MessageListReaction
