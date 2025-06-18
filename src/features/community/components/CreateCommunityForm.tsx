@@ -43,7 +43,7 @@ const steps = [
    { id: 2, title: 'Group Settings', description: 'Set group name and photo' }
 ]
 
-export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
+export function CreateCommunityForm({ type, children }: Props) {
    const fileInputRef = useRef<HTMLInputElement>(null)
    const [currentStep, setCurrentStep] = useState(1)
    const [searchQuery, setSearchQuery] = useState('')
@@ -191,52 +191,26 @@ export function CreateCommunityForm({ type = 'GROUP', children }: Props) {
       const membersArray = selectedMembers.map((m) => m.id)
       form.setValue('members', membersArray)
 
-      const formData = new FormData()
-      formData.append('chatName', form.getValues('name'))
-
-      // Xử lý coverImage - nếu có thì gửi base64, nếu không thì gửi chuỗi rỗng
+      // Lấy dữ liệu từ form
+      const name = form.getValues('name')
       const coverImage = form.getValues('coverImage')
-      if (coverImage && coverImage.trim() !== '') {
-         formData.append('coverImage', coverImage)
-      } else {
-         formData.append('coverImage', '')
+      const description = form.getValues('description') || ''
+
+      // Tạo object dữ liệu
+      const data = {
+         name,
+         coverImage: coverImage || '', // base64 hoặc chuỗi rỗng
+         description,
+         members: membersArray
       }
 
-      formData.append('description', form.getValues('description') || '')
-
-      // Thêm members dưới dạng JSON string array
-      if (membersArray && membersArray.length > 0) {
-         formData.append('members', JSON.stringify(membersArray))
-      } else {
-         formData.append('members', JSON.stringify([]))
-      }
-
-      console.log('Submitting FormData:', {
-         chatName: form.getValues('name'),
-         coverImage: coverImage ? 'base64_image_data' : 'empty',
-         description: form.getValues('description'),
-         selectedMembers: selectedMembers.map((m) => ({ id: m.id, name: m.fullName })),
-         membersArray: membersArray,
-         membersJSON: JSON.stringify(membersArray),
-         membersLength: membersArray.length
-      })
-
-      // Log FormData entries for debugging
-      console.log('FormData entries:')
-      for (let [key, value] of formData.entries()) {
-         if (key === 'members') {
-            console.log(`${key}:`, value)
-         } else {
-            console.log(`${key}:`, value)
-         }
-      }
+      console.log('Submitting object:', data)
 
       try {
-         await mutate({ type, data: formData })
+         await mutate({ type, data })
          setIsDialogOpen(false)
       } catch (error) {
          console.error('Error creating community:', error)
-         // Có thể thêm toast notification ở đây
       }
    }
 
