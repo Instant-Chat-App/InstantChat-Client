@@ -1,3 +1,4 @@
+import ConfirmForm from '@/components/custom/ConfirmForm'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +27,7 @@ import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
 import useCurrentMemberChat from '../hooks/useCurrentMemberChat'
+import { useLeaveChat } from '../hooks/useLeaveChat'
 import {
    CommunityDetailType,
    UpdateCommunityFormData,
@@ -42,8 +44,8 @@ function CommunityDetail({ detail, children }: Props) {
    const fileInputRef = useRef<HTMLInputElement>(null)
    const [searchParams] = useSearchParams()
    const chatId = searchParams.get('id')
-   const isOwner = true
    const { currentMemberChat } = useCurrentMemberChat(Number(chatId))
+   const { mutate: leaveChat } = useLeaveChat(Number(chatId))
 
    const form = useForm<UpdateCommunityFormData>({
       resolver: zodResolver(updateCommunityFormSchema),
@@ -152,8 +154,21 @@ function CommunityDetail({ detail, children }: Props) {
                         )}
                      />
 
+                     {/*  Leave Community  */}
+                     {!currentMemberChat?.isOwner && (
+                        <ConfirmForm
+                           title='Leave'
+                           description='Do you want to leave ?'
+                           onConfirm={() => leaveChat(currentMemberChat?.memberId || -100)}
+                        >
+                           <button className='w-full rounded-lg bg-red-500 p-3 text-white'>
+                              Leave
+                           </button>
+                        </ConfirmForm>
+                     )}
+
                      {/*  List Members  */}
-                     <MemberList isOwner={isOwner} detail={detail} />
+                     <MemberList chatId={Number(chatId)} />
                   </form>
                </Form>
             </div>
