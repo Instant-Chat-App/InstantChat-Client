@@ -3,7 +3,7 @@ import { getChatMembers } from '../service/MemberService'
 
 export default function useChatMember(chatId: number) {
    const { data: chatMembers } = useQuery({
-      queryKey: ['chat-members', chatId],
+      queryKey: ['chatMembers', chatId],
       queryFn: () => getChatMembers(chatId),
       select: (data) => data.data,
       enabled: !!chatId

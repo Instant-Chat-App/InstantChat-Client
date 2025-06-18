@@ -1,3 +1,4 @@
+import ConfirmForm from '@/components/custom/ConfirmForm'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -25,8 +26,8 @@ import * as React from 'react'
 import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
-import useChatMember from '../hooks/useChatMember'
 import useCurrentMemberChat from '../hooks/useCurrentMemberChat'
+import { useLeaveChat } from '../hooks/useLeaveChat'
 import {
    CommunityDetailType,
    UpdateCommunityFormData,
@@ -44,7 +45,7 @@ function CommunityDetail({ detail, children }: Props) {
    const [searchParams] = useSearchParams()
    const chatId = searchParams.get('id')
    const { currentMemberChat } = useCurrentMemberChat(Number(chatId))
-   const { chatMembers } = useChatMember(Number(chatId))
+   const { mutate: leaveChat } = useLeaveChat(Number(chatId))
 
    const form = useForm<UpdateCommunityFormData>({
       resolver: zodResolver(updateCommunityFormSchema),
@@ -153,12 +154,21 @@ function CommunityDetail({ detail, children }: Props) {
                         )}
                      />
 
+                     {/*  Out Community  */}
+                     {!currentMemberChat?.isOwner && (
+                        <ConfirmForm
+                           title='Leave'
+                           description='Do you want to leave ?'
+                           onConfirm={() => leaveChat(currentMemberChat?.memberId || -100)}
+                        >
+                           <button className='w-full rounded-lg bg-red-500 p-3 text-white'>
+                              Leave
+                           </button>
+                        </ConfirmForm>
+                     )}
+
                      {/*  List Members  */}
-                     <MemberList
-                        currentUserId={currentMemberChat?.memberId || -100}
-                        isOwner={currentMemberChat?.isOwner || false}
-                        members={chatMembers || []}
-                     />
+                     <MemberList chatId={Number(chatId)} />
                   </form>
                </Form>
             </div>
