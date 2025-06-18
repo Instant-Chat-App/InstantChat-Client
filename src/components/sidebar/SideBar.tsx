@@ -2,10 +2,13 @@ import ChatList from '@/features/chat/components/ChatList'
 import ToolButton from '@/features/community/components/ToolButton'
 import UserSetting from '@/features/user/components/UserSetting'
 import { MoreVertical, Search } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 
 function SideBar() {
+   const [searchQuery, setSearchQuery] = useState('')
+
    return (
       <div className='group relative min-h-screen w-1/4 border'>
          <div className='border-border border-b p-4'>
@@ -26,15 +29,15 @@ function SideBar() {
                <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
                <Input
                   placeholder='Search chats...'
-                  // value={searchQuery}
-                  // onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className='pl-10'
                />
             </div>
          </div>
 
          {/* Chat List */}
-         <ChatList />
+         <ChatList searchQuery={searchQuery} />
 
          {/* Tool Button */}
          <ToolButton />
