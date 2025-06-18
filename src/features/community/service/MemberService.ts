@@ -22,3 +22,7 @@ export const leaveChat = (chatId: number, userId: number) => {
       data: { userId }
    })
 }
+
+export const addMemberToChat = (chatId: number, members: number[]) => {
+   return axiosInstance.post(`${SERVER_URL}/api/chats/${chatId}/members`, { members })
+}

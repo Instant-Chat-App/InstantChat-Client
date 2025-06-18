@@ -6,6 +6,7 @@ import { Trash, UserPlus, UsersRound } from 'lucide-react'
 import useChatMember from '../hooks/useChatMember'
 import useCurrentMemberChat from '../hooks/useCurrentMemberChat'
 import { useDeleteMember } from '../hooks/useDeleteMember'
+import AddMember from './AddMember'
 
 interface Props {
    chatId: number
@@ -21,9 +22,13 @@ function MemberList({ chatId }: Props) {
    return (
       <div>
          {isOwner ? (
-            <button className='flex w-full items-center justify-center gap-2 pt-2 font-medium'>
-               <UserPlus className='size-4' /> <div>Add Members</div>
-            </button>
+            <div className='w-full flex justify-center'>
+               <AddMember chatId={chatId}>
+                  <button className='flex w-full items-center justify-center gap-2 pt-2 font-medium'>
+                     <UserPlus className='size-4' /> <div>Add Members</div>
+                  </button>
+               </AddMember>
+            </div>
          ) : (
             <div className='flex w-full items-center justify-center gap-2 pt-2 font-medium'>
                <UsersRound className='size-4' /> <div>Members</div>

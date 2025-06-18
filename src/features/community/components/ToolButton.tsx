@@ -8,7 +8,7 @@ function ToolButton() {
    return (
       <button
          className={cn(
-            'bg-base pointer-events-auto absolute right-10 bottom-10 flex h-[56px] w-[56px] items-center justify-center rounded-full opacity-100 transition-all duration-200'
+            'bg-base pointer-events-auto absolute right-10 bottom-10 flex h-[56px] w-[56px] items-center justify-center rounded-full opacity-0 transition-all duration-200 group-hover:opacity-100'
          )}
       >
          <Popover>

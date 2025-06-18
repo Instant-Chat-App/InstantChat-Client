@@ -154,7 +154,7 @@ function CommunityDetail({ detail, children }: Props) {
                         )}
                      />
 
-                     {/*  Out Community  */}
+                     {/*  Leave Community  */}
                      {!currentMemberChat?.isOwner && (
                         <ConfirmForm
                            title='Leave'
