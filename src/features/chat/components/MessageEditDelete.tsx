@@ -7,7 +7,8 @@ import {
    DialogFooter,
    DialogHeader,
    DialogTitle,
-   DialogTrigger
+   DialogTrigger,
+   DialogDescription
 } from '@/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -16,6 +17,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { PenBox, Trash } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import z from 'zod'
+import useMessage from '../hooks/useMessage'
+import { useState } from 'react'
+
 
 const editMessageSchema = z.object({
    content: z.string().trim().min(1, 'Tin nhắn Không được để trống')
@@ -24,12 +28,15 @@ const editMessageSchema = z.object({
 interface Props {
    children: React.ReactNode
    message: {
+      chatId: number
       messageId: number
       content: string
    }
 }
 
-function MessagEditDelete({ message, children }: Props) {
+function MessagEditDelete({ message, children}: Props) {
+   const [isDialogOpen, setIsDialogOpen] = useState(false)
+   const {deleteMessage, editMessage} = useMessage(message.chatId)
    const form = useForm({
       resolver: zodResolver(editMessageSchema),
       defaultValues: {
@@ -37,14 +44,26 @@ function MessagEditDelete({ message, children }: Props) {
       }
    })
 
-   const onEdit = (): void => {}
-   const handleDelete = (): void => {}
+   const handleEditMessage = (data: { content: string }): void => {
+      const content = data.content.trim()
+      if (!content) {
+         form.setError('content', { message: 'Tin nhắn không được để trống' })
+         return
+      }
+      editMessage(message.messageId, content)
+      setIsDialogOpen(false) // Close dialog after edit
+      form.reset() // Reset form
+   }
+
+   const handleDelete = (): void => {
+      deleteMessage(message.messageId)
+   }
 
    return (
       <Popover>
          <PopoverTrigger asChild>{children}</PopoverTrigger>
          <PopoverContent className='max-w-[150px] rounded-none p-0 font-normal'>
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                <DialogTrigger asChild>
                   {/*  Edit Message  */}
                   <button className='flex w-full items-center gap-3 px-3 py-1 text-sm hover:bg-gray-100'>
@@ -55,9 +74,12 @@ function MessagEditDelete({ message, children }: Props) {
                <DialogContent className='sm:max-w-[425px]'>
                   <DialogHeader>
                      <DialogTitle>Sửa tin nhắn</DialogTitle>
+                     <DialogDescription>
+                        Nhập nội dung tin nhắn mới bên dưới
+                     </DialogDescription>
                   </DialogHeader>
                   <Form {...form}>
-                     <form onSubmit={form.handleSubmit(onEdit)} className='space-y-4'>
+                     <form onSubmit={form.handleSubmit(handleEditMessage)} className='space-y-4'>
                         <FormField
                            control={form.control}
                            name='content'
@@ -90,7 +112,6 @@ function MessagEditDelete({ message, children }: Props) {
             >
                <button
                   className='flex w-full items-center gap-3 px-3 py-1 text-sm text-red-500 hover:bg-gray-100'
-                  onClick={handleDelete}
                >
                   <Trash className='size-3' />
                   <span>Xoá</span>

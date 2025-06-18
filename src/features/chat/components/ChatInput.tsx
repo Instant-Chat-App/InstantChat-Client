@@ -84,7 +84,7 @@ function ChatInput({ chatId }: { chatId: number | null }) {
                            file.type.startsWith('text/');
          const isValidSize = file.size <= 25 * 1024 * 1024; // 25MB limit
          return isValidType && isValidSize;
-      });
+      });   
 
       if (validFiles.length !== files.length) {
          alert('Some files were skipped. Please ensure files are under 25MB and are of valid types.');
